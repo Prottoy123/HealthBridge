@@ -17,8 +17,9 @@ app.use(express.static("public")); // this is used to serve the static files fro
 app.use(cookieParser()); // this is used to parse the cookies from the request header and make it available in the req.cookies object. this is done to get the refresh token from the cookies when we want to refresh the access token using the refresh token. we can get the refresh token from the req.cookies.refreshToken and use it to generate a new access token.
 
 //Routes
-
+import UserRouter from "./routes/user.routes.js";
 
 //routes declaration
+app.use("/api/v1/user",UserRouter );
 
 export { app };
