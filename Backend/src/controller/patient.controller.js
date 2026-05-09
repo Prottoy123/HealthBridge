@@ -47,7 +47,7 @@ export const updatePatientProfile = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, "Profile Updated", UpdateProfile));
 });
 
-export const pastMedicalRecord = asyncHandler(async (req, res) => {
+export const uploadMedicalRecord = asyncHandler(async (req, res) => {
   // Check if files are uploaded
   if (!req.files || req.files.length === 0) {
     throw new ApiError(400, "No medical records uploaded");
@@ -214,7 +214,102 @@ return res
 })
 
 export const getDoctorList = asyncHandler(async(req,res)=>{
-  
-})
+
+  const {page=1,
+    limit=10,
+      specialization,
+      search,
+  } = req.query
+
+  const pageNumber = parseInt(page)
+  const limitNumber = parseInt(limit)
+
+  const skipValue = (pageNumber - 1) * limitNumber;
+
+  const pipeline = [
+    {
+      $match: {
+        isVerified: true,
+        ...(specialization && { specialization }),
+      },
+    },
+
+    //second stage - joining the user models fields in this table.
+    {
+      $lookup: {
+        from: "users",
+        localField: "userId",
+        foreignField: "_id",
+        as: "User_details",
+      },
+    },
+
+    //Third Stage - to convert array into object
+    {
+      $unwind: "$User_details",
+    },
+
+    // Fourth Stage - Deep Filtering with Regex
+    {
+      $match: {
+        ...(search && {
+          "User_details.name": {
+            $regex: search,
+            $options: "i",
+          },
+        }),
+      },
+    },
+
+    //5th - showing all the details
+    {
+      $project: {
+        qualifications: 1,
+        experienceYears: 1,
+        consultationFee: 1,
+        "User_details.name": 1,
+        "User_details.profileImage": 1,
+      },
+    },
+
+    // Final Stage - The Parallel Engine
+    {
+      $facet: {
+        // doctorlist with pagination 
+        doctorsList: [
+          { $skip: skipValue },
+           { $limit: limitNumber }
+          ],
+
+        // total doctor count seperately
+        totalCount: [{ $count: "total" }],
+      },
+    },
+  ];
+
+  const list = await DoctorProfile.aggregate(pipeline);
+
+  const doctors = list[0]?.doctorsList || [];
+  const totalDocs = list[0]?.totalCount[0]?.total || 0;
+
+  // pagination math
+  const totalPages = Math.ceil(totalDocs / limitNumber);
+
+  // for frontend payload delivery
+  const payload = {
+    doctors,
+    pagination: {
+      totalDocs,
+      totalPages,
+      currentPage: pageNumber,
+      limit: limitNumber,
+    },
+  };
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, payload, "Doctors list fetched successfully"));
+});
+
 
 
