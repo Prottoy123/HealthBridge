@@ -4,7 +4,7 @@ const doctorProfileSchema = new Schema(
   {
     userId: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: "User", 
       required: true,
       unique: true,
     },
@@ -13,9 +13,26 @@ const doctorProfileSchema = new Schema(
       required: true,
       trim: true,
     },
+    qualifications: [
+      {
+        type: String, 
+        trim: true,
+        required: true,
+      },
+    ],
+    experienceYears: {
+      type: Number,
+      required: true,
+      min: [0, "Experience cannot be negative"],
+    },
+    about: {
+      type: String, 
+      trim: true,
+    },
     consultationFee: {
       type: Number,
       required: true,
+      min: [0, "Fee cannot be negative"],
     },
     slotDuration: {
       type: Number,
@@ -24,7 +41,7 @@ const doctorProfileSchema = new Schema(
     },
     workingDays: [
       {
-        type: String,
+        type: String, 
         trim: true,
       },
     ],
@@ -39,6 +56,10 @@ const doctorProfileSchema = new Schema(
     roomNumber: {
       type: String,
       trim: true,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false, 
     },
   },
   { timestamps: true }
