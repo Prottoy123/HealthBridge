@@ -13,9 +13,7 @@ import {
 
 const router = Router();
 
-// ==========================================
 // 1. Discovery Engine Routes
-// ==========================================
 router
   .route("/doctors")
   .get(verifyJWT, restrictTo(["PATIENT", "STAFF"]), getDoctorList);
@@ -24,9 +22,7 @@ router
   .route("/slots/:doctorId")
   .get(verifyJWT, restrictTo(["PATIENT", "STAFF"]), getAvailableSlots);
 
-// ==========================================
 // 2. Profile & Medical Records Routes
-// ==========================================
 router
   .route("/profile")
   .patch(verifyJWT, restrictTo(["PATIENT"]), updatePatientProfile);
@@ -40,9 +36,7 @@ router
     uploadMedicalRecord
   );
 
-// ==========================================
 // 3. Transaction Engine (Appointment) Routes
-// ==========================================
 
 router
   .route("/book/:appointmentId")
