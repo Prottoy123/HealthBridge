@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { createServer } from "http";
-import { Server } from "socket.io"; 
+import { Server } from "socket.io";
 
 const app = express();
 const server = createServer(app);
@@ -21,7 +21,7 @@ app.set("io", io);
 app.use(
   cors({
     origin: process.env.CORS_ORIGIN,
-    credentials: true, 
+    credentials: true,
   })
 );
 
@@ -47,9 +47,13 @@ io.on("connection", (socket) => {
 
 //Routes
 import UserRouter from "./routes/user.routes.js";
+import medicalRecord from "./routes/medicalRecod.routes.js";
+import patient from "./routes/patient.routes.js";
 
 //routes declaration
 app.use("/api/v1/user", UserRouter);
+app.use("/api/v1/medical-records", medicalRecord);
+app.use("/api/v1/patient", patient);
 
 // 7. Export the explicitly created 'server' along with 'app'
 export { app, server, io };
