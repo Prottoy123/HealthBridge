@@ -143,12 +143,11 @@ export const getDailySchedule = asyncHandler(async (req, res) => {
       },
     },
 
-    // 6. Maintain Queue Order: Sort by time (Morning to Night)
+    // 6. Maintain Queue Order
     {
       $sort: { startTime: 1 },
     },
 
-    // 7. Data Cleaning: Project only the exact fields needed by the frontend
     {
       $project: {
         _id: 1,
@@ -161,8 +160,8 @@ export const getDailySchedule = asyncHandler(async (req, res) => {
         // Grouping patient details into a clean, structured object
         patientDetails: {
           name: "$patientBasicInfo.fullName", // Taking from 1st lookup
-          age: "$calculatedAge", // Exposing the calculated age
-          bloodGroup: "$patientMedicalData.bloodGroup", // Taking from 2nd lookup
+          age: "$calculatedAge",
+          bloodGroup: "$patientMedicalData.bloodGroup",
           allergies: "$patientMedicalData.allergies",
           chronicDiseases: "$patientMedicalData.chronicDiseases",
         },
@@ -182,3 +181,6 @@ export const getDailySchedule = asyncHandler(async (req, res) => {
       new ApiResponse(200, "Daily schedule fetched successfully", dailySchedule)
     );
 });
+export const completeVisit = asyncHandler(async(req,res)=>{
+  
+})
