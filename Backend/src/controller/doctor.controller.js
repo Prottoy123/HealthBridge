@@ -73,3 +73,112 @@ export const updateDoctorProfile = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, "Profile updated successfully", updatedProfile));
 });
+
+export const getDailySchedule = asyncHandler(async (req, res) => {
+  // Set time boundaries for "today" based on server time
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const endOfDay = new Date();
+  endOfDay.setHours(23, 59, 59, 999);
+
+  const pipeline = [
+    // Filter today's active appointments for the logged-in doctor
+    {
+      $match: {
+        doctorId: new mongoose.Types.ObjectId(req.user._id),
+        appointmentDate: {
+          $gte: startOfDay,
+          $lte: endOfDay,
+        },
+        status: { $ne: "CANCELLED" },
+      },
+    },
+
+    // 3. Get basic user info (name, email) from "users" collection
+    {
+      $lookup: {
+        from: "users",
+        localField: "patientId", // Fixed case-sensitivity (was PatientId)
+        foreignField: "_id",
+        as: "patientBasicInfo",
+      },
+    },
+    {
+      $unwind: "$patientBasicInfo",
+    },
+
+    // Get medical info (DOB, bloodGroup) from "patientprofiles" collection
+    {
+      $lookup: {
+        from: "patientprofiles", // Must match your exact DB collection name
+        localField: "patientId",
+        foreignField: "userId",
+        as: "patientMedicalData",
+      },
+    },
+    {
+      $unwind: {
+        path: "$patientMedicalData",
+        preserveNullAndEmptyArrays: true, // Prevents pipeline crash if profile doesn't exist
+      },
+    },
+
+    // 5. Mathematical Engine: Calculate exact age using $dateDiff
+    {
+      $addFields: {
+        calculatedAge: {
+          $cond: {
+            if: { $ifNull: ["$patientMedicalData.dateOfBirth", false] },
+            then: {
+              $dateDiff: {
+                startDate: "$patientMedicalData.dateOfBirth",
+                endDate: "$$NOW",
+                unit: "year",
+              },
+            },
+            else: "N/A",
+          },
+        },
+      },
+    },
+
+    // 6. Maintain Queue Order: Sort by time (Morning to Night)
+    {
+      $sort: { startTime: 1 },
+    },
+
+    // 7. Data Cleaning: Project only the exact fields needed by the frontend
+    {
+      $project: {
+        _id: 1,
+        appointmentDate: 1,
+        startTime: 1,
+        endTime: 1,
+        status: 1,
+        aiSymptomSummary: 1,
+
+        // Grouping patient details into a clean, structured object
+        patientDetails: {
+          name: "$patientBasicInfo.fullName", // Taking from 1st lookup
+          age: "$calculatedAge", // Exposing the calculated age
+          bloodGroup: "$patientMedicalData.bloodGroup", // Taking from 2nd lookup
+          allergies: "$patientMedicalData.allergies",
+          chronicDiseases: "$patientMedicalData.chronicDiseases",
+        },
+      },
+    },
+  ];
+
+  const dailySchedule = await Appointment.aggregate(pipeline);
+
+  if (!dailySchedule) {
+    throw new ApiError(500, "Failed to fetch daily schedule");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, "Daily schedule fetched successfully", dailySchedule)
+    );
+});
