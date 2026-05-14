@@ -4,7 +4,7 @@ const doctorProfileSchema = new Schema(
   {
     userId: {
       type: Schema.Types.ObjectId,
-      ref: "User", 
+      ref: "User",
       required: true,
       unique: true,
     },
@@ -15,7 +15,7 @@ const doctorProfileSchema = new Schema(
     },
     qualifications: [
       {
-        type: String, 
+        type: String,
         trim: true,
         required: true,
       },
@@ -26,7 +26,7 @@ const doctorProfileSchema = new Schema(
       min: [0, "Experience cannot be negative"],
     },
     about: {
-      type: String, 
+      type: String,
       trim: true,
     },
     consultationFee: {
@@ -41,17 +41,23 @@ const doctorProfileSchema = new Schema(
     },
     workingDays: [
       {
-        type: String, 
+        type: String,
         trim: true,
+        enum: {
+          values: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+          message: "{VALUE} is not a valid working day",
+        },
       },
     ],
     shiftStartTime: {
       type: String,
       required: true,
+      match: [/^([01]\d|2[0-3]):?([0-5]\d)$/, "Please provide a valid 24-hour time format (e.g., 18:00)"],
     },
     shiftEndTime: {
       type: String,
       required: true,
+      match: [/^([01]\d|2[0-3]):?([0-5]\d)$/, "Please provide a valid 24-hour time format (e.g., 21:00)"],
     },
     roomNumber: {
       type: String,
@@ -59,13 +65,9 @@ const doctorProfileSchema = new Schema(
     },
     isVerified: {
       type: Boolean,
-      default: false, 
+      default: false,
     },
   },
   { timestamps: true }
 );
-
-export const DoctorProfile = mongoose.model(
-  "DoctorProfile",
-  doctorProfileSchema
-);
+export const DoctorProfile = mongoose.model("DoctorProfile", doctorProfileSchema);
