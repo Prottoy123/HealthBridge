@@ -5,6 +5,7 @@ import { asyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
 import { Appointment } from "../models/appoinment.models.js";
 import { DoctorProfile } from "../models/doctorProfile.models.js";
+import { FollowUp } from "../models/followUp.models.js";
 
 export const updateDoctorProfile = asyncHandler(async (req, res) => {
   if (req.body.isVerified !== undefined || req.body.userId !== undefined) {
@@ -181,6 +182,83 @@ export const getDailySchedule = asyncHandler(async (req, res) => {
       new ApiResponse(200, "Daily schedule fetched successfully", dailySchedule)
     );
 });
-export const completeVisit = asyncHandler(async(req,res)=>{
-  
-})
+
+export const completeVisit = asyncHandler(async (req, res) => {
+  const { appointmentId } = req.params;
+  const { followUpDays } = req.body;
+
+  if (!appointmentId) {
+    throw new ApiError(400, "Appointment ID is required");
+  }
+
+  if (followUpDays === undefined || followUpDays === null) {
+    throw new ApiError(400, "Follow-up days are required");
+  }
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const appointmentStatus = await Appointment.findOneAndUpdate(
+      {
+        _id: appointmentId,
+        doctorId: req.user._id, 
+      },
+      {
+        $set: {
+          status: "COMPLETED", 
+        },
+      },
+      {
+        new: true,
+        session, 
+      }
+    );
+
+    if (!appointmentStatus) {
+      throw new ApiError(
+        404,
+        "Appointment not found or you are not authorized"
+      );
+    }
+
+    const unlocksAtTime = Date.now() + followUpDays * 24 * 60 * 60 * 1000;
+
+    const unlocksAt = new Date(unlocksAtTime);
+    const expiresAt = new Date(unlocksAtTime + 48 * 60 * 60 * 1000);
+
+    const createFollowUp = await FollowUp.create(
+      [
+        {
+          originalAppointmentId: appointmentId,
+          type: "POST_MEDICATION_CHAT",
+          unlocksAt: unlocksAt,
+          expiresAt: expiresAt,
+        },
+      ],
+      { session }
+    );
+
+    if (!createFollowUp || createFollowUp.length === 0) {
+      throw new ApiError(500, "Failed to create follow-up window");
+    }
+
+    await session.commitTransaction();
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        {
+          appointment: appointmentStatus,
+          followUp: createFollowUp[0], 
+        },
+        "Visit completed and follow-up scheduled successfully"
+      )
+    );
+  } catch (error) {
+    await session.abortTransaction();
+    throw error; 
+  } finally {
+    await session.endSession();
+  }
+});
