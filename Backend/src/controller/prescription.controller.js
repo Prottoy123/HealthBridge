@@ -46,3 +46,58 @@ const uploadPrescription = asyncHandler(async (req, res) => {
       )
     );
 });
+
+const getMyPrescriptions = asyncHandler(async(req,res)=>{
+
+  const {page=1,limit=10} = req.query;
+
+    const pageNumber = parseInt(page);
+    const limitNumber = parseInt(limit);
+
+    const pipeline = [
+      {
+        $match: {
+          patientId: new mongoose.Types.ObjectId(req.user._id),
+        },
+      },
+
+      {
+        $sort: {
+          prescriptionDate:-1
+        },
+      },
+    ];
+
+    const aggregateQuery = await Prescription.aggregate(pipeline);
+    const prescriptions = await Prescription.aggregatePaginate(pipeline, {
+      page: pageNumber,
+      limit: limitNumber,
+    });
+
+    if (!prescriptions) {
+      throw new ApiError(500, "Failed to fetch prescriptions");
+    }
+
+    const payload = {
+      records: prescriptions.docs, 
+      pagination: {
+        totalDocs: prescriptions.totalDocs, 
+        totalPages: prescriptions.totalPages, 
+        currentPage: prescriptions.page, 
+        hasNextPage: prescriptions.hasNextPage, 
+        hasPrevPage: prescriptions.hasPrevPage,
+      },
+    };
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, payload, "Prescriptions fetched successfully")
+      );
+
+})
+
+const getPatientPrescriptions = asyncHandler(async(req,res)=>{
+
+  
+})
