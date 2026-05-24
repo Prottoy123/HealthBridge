@@ -77,3 +77,40 @@ export const generateSlots = asyncHandler(async (req, res) => {
     .status(201)
     .json(new ApiResponse(201, generateSlots, "Slots generated successfully"));
 });
+
+export const updateQueueStatus = asyncHandler (async (req, res) => {
+ const { appointmentId } = req.params;
+  const { status } = req.body
+
+  const validStatuses = ["CHECKED-IN", "IN-PROGRESS", "COMPLETED", "CANCELLED"];
+  if (!status || !validStatuses.includes(status)) {
+    throw new ApiError(
+      400,
+      `Invalid status. Must be one of: ${validStatuses.join(", ")}`
+    );
+  }
+
+  const checkAppointment = await Appointment.findOneAndUpdate(
+    { _id:appointmentId },
+    {
+      $set: { status: status },
+    },
+    { new: true }
+  );
+
+  if (!checkAppointment) {
+    throw new ApiError(404, "Appointment not found");
+  }
+
+  const io = req.app.get("io");
+
+  // need the same room name in frontend (staff_desk)
+  io.to("staff_desk").emit("queue_update", checkAppointment);
+
+return res
+    .status(200)
+    .json(new ApiResponse(200, checkAppointment, "Queue status updated successfully"));
+
+})
+
+
