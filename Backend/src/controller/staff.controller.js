@@ -78,9 +78,9 @@ export const generateSlots = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, generateSlots, "Slots generated successfully"));
 });
 
-export const updateQueueStatus = asyncHandler (async (req, res) => {
- const { appointmentId } = req.params;
-  const { status } = req.body
+export const updateQueueStatus = asyncHandler(async (req, res) => {
+  const { appointmentId } = req.params;
+  const { status } = req.body;
 
   const validStatuses = ["CHECKED-IN", "IN-PROGRESS", "COMPLETED", "CANCELLED"];
   if (!status || !validStatuses.includes(status)) {
@@ -91,7 +91,7 @@ export const updateQueueStatus = asyncHandler (async (req, res) => {
   }
 
   const checkAppointment = await Appointment.findOneAndUpdate(
-    { _id:appointmentId },
+    { _id: appointmentId },
     {
       $set: { status: status },
     },
@@ -107,10 +107,73 @@ export const updateQueueStatus = asyncHandler (async (req, res) => {
   // need the same room name in frontend (staff_desk)
   io.to("staff_desk").emit("queue_update", checkAppointment);
 
-return res
+  return res
     .status(200)
-    .json(new ApiResponse(200, checkAppointment, "Queue status updated successfully"));
+    .json(
+      new ApiResponse(
+        200,
+        checkAppointment,
+        "Queue status updated successfully"
+      )
+    );
+});
 
-})
+export const getDoctorAppointments = asyncHandler(async (req, res) => {
+  const { doctorId } = req.query;
+  let { date } = req.query;
 
+  if (!doctorId) {
+    throw new ApiError(400, "Doctor ID is required to fetch the queue");
+  }
 
+  if (!date) {
+    const today = new Date();
+    date = today.toISOString().split("T")[0];
+  }
+
+  const queue = await Appointment.aggregate([
+    {
+      $match: {
+        doctorId: new mongoose.Types.ObjectId(doctorId),
+        appointmentDate: new Date(date),
+      },
+    },
+    {
+      $lookup: {
+        from: "users", 
+        localField: "patientId",
+        foreignField: "_id",
+        as: "patientInfo",
+      },
+    },
+
+    {
+      $unwind: {
+        path: "$patientInfo",
+        preserveNullAndEmptyArrays: true, 
+      },
+    },
+    {
+      
+      $sort: {
+        startTime: 1,
+      },
+    },
+    {
+      $project: {
+        _id: 1, 
+        appointmentDate: 1,
+        startTime: 1,
+        endTime: 1,
+        status: 1,
+        "patientInfo._id": 1,
+        "patientInfo.fullName": 1, 
+        aiSymptomSummary: 0, 
+      },
+    },
+  ]);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, queue, "Doctor queue fetched successfully"));
+});
