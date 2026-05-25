@@ -87,6 +87,7 @@ export const uploadMedicalRecord = asyncHandler(async (req, res) => {
   });
 
   //Database operations to save all the files in once
+try {
   const createRecords = await MedicalRecord.insertMany(medicalRecordsData);
 
   if (!createRecords || createRecords.length === 0) {
@@ -98,10 +99,25 @@ export const uploadMedicalRecord = asyncHandler(async (req, res) => {
     .json(
       new ApiResponse(
         201,
-        "Medical records uploaded successfully",
-        createRecords
+        createRecords,
+        "Medical records uploaded successfully"
       )
     );
+} catch (error) {
+  if (successfulUploads && successfulUploads.length > 0) {
+    const deletePromises = successfulUploads.map((file) =>
+      deleteFromCloudinary(file.public_id)
+    );
+
+    await Promise.all(deletePromises);
+  }
+
+  throw new ApiError(
+    500,
+    error?.message ||
+      "Database transaction failed. Orphaned files cleaned up successfully."
+  );
+}
 });
 
 export const getAvailableSlots = asyncHandler(async (req, res) => {
