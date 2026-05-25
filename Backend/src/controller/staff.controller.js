@@ -177,3 +177,71 @@ export const getDoctorAppointments = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, queue, "Doctor queue fetched successfully"));
 });
+
+export const uploadPatientReport = asyncHandler(async (req, res) => {
+
+  const { patientId } = req.body
+
+  if (!patientId) {
+    throw new ApiError(401,"Patient Id Required")
+  }
+
+   if (!req.files || req.files.length === 0) {
+     throw new ApiError(400, "No medical records uploaded");
+   }
+
+   const filesPath = req.files.map((file)=>file.path)
+
+   const uploadPromises = filesPath.map((path)=>uploadOnCloudinary(path))
+
+   const resolvePromises = await Promise.all(uploadPromises)
+
+     const successfulUploads = resolvePromises.filter((file) => file !== null);
+
+     if (successfulUploads.length === 0) {
+       throw new ApiError(500, "Failed to upload files to cloud server");
+     }
+
+      const medicalRecordsData = successfulUploads.map((file) => {
+        return {
+          patientId: patientId,
+          fileUrl: file.url,
+          recordType: 'LAB_REPORT',
+          uploadedBy: req.user._id,
+          uploaderRole: req.user.role,
+        };
+      });
+
+try {
+  const createRecords = await MedicalRecord.insertMany(medicalRecordsData);
+
+  if (!createRecords || createRecords.length === 0) {
+    throw new ApiError(500, "Failed to save medical records in database");
+  }
+
+  return res
+    .status(201)
+    .json(
+      new ApiResponse(
+        201,
+        createRecords,
+        "Medical records uploaded successfully"
+      )
+    );
+} catch (error) {
+  if (successfulUploads && successfulUploads.length > 0) {
+    const deletePromises = successfulUploads.map((file) =>
+      deleteFromCloudinary(file.public_id)
+    );
+
+    await Promise.all(deletePromises);
+  }
+
+  throw new ApiError(
+    500,
+    error?.message ||
+      "Database transaction failed. Orphaned files cleaned up successfully."
+  );
+}
+
+})
