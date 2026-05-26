@@ -74,3 +74,50 @@ const pageNumber = Math.max(1, parseInt(page, 10) || 1);
 
 
 })
+
+export const verifyDoctor = asyncHandler(async(req,res)=>{
+
+    const {doctorId} = req.params;
+
+    if(!doctorId) {
+        throw new ApiError(400,"Doctor ID is required")
+    }
+
+    const getDoctor = await DoctorProfile.findOne({ _id: doctorId }).populate(
+      "userId",
+      "email status" // শুধু ইমেইল আর স্ট্যাটাস প্রজেক্ট করছি, পুরো ডেটা নয়
+    );
+
+    if (!getDoctorProfile) {
+      throw new ApiError(404, "Doctor profile not found");
+    }
+
+    if (getDoctor.isVerified === true) {
+      throw new ApiError(400, "Doctor already verified");
+    }
+
+getDoctorProfile.isVerified = true;
+await getDoctorProfile.save();
+
+const updatedUser = await User.findByIdAndUpdate(
+  getDoctorProfile.userId._id,
+  { $set: { status: "ACTIVE" } },
+  { new: true }
+);
+
+    if (!updateDoctor) {
+      throw new ApiError(500, "Failed to verify doctor");
+    }
+
+   sendEmail({
+     email: getDoctorProfile.userId.email,
+     subject: "Verification Successful - HealthBridge",
+     message:
+       "Congratulations! Your profile has been verified by the Admin. Your account is now ACTIVE and you can start generating your slots.",
+   });
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, updateDoctor, "Doctor verified successfully"));
+
+})
