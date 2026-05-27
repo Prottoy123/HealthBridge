@@ -83,9 +83,9 @@ export const verifyDoctor = asyncHandler(async(req,res)=>{
         throw new ApiError(400,"Doctor ID is required")
     }
 
-    const getDoctor = await DoctorProfile.findOne({ _id: doctorId }).populate(
+    const getDoctor = await DoctorProfile.findById({ _id: doctorId }).populate(
       "userId",
-      "email status" // শুধু ইমেইল আর স্ট্যাটাস প্রজেক্ট করছি, পুরো ডেটা নয়
+      "email status" 
     );
 
     if (!getDoctorProfile) {
@@ -121,3 +121,4 @@ const updatedUser = await User.findByIdAndUpdate(
       .json(new ApiResponse(200, updateDoctor, "Doctor verified successfully"));
 
 })
+
