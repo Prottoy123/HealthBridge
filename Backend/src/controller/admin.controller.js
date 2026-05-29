@@ -122,3 +122,48 @@ const updatedUser = await User.findByIdAndUpdate(
 
 })
 
+export const updateUserStatus = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  const { status } = req.body;
+
+  if (!userId) {
+    throw new ApiError(400, "User ID is required");
+  }
+
+  // Prevent admin from suspending their own account (Type casting matched)
+  if (userId === req.user._id.toString()) {
+    throw new ApiError(403, "You cannot change your own account status");
+  }
+
+  if (!status || !["ACTIVE", "BLOCKED"].includes(status)) {
+    throw new ApiError(400, "Valid status is required (ACTIVE or BLOCKED)");
+  }
+
+  const findUser = await User.findById(userId);
+
+  if (!findUser) {
+    throw new ApiError(404, "User not found in the database");
+  }
+
+  // Idempotency check: Avoid unnecessary database write operation
+  if (findUser.status === status) {
+    throw new ApiError(400, `User is already ${status}`);
+  }
+
+  findUser.status = status;
+  await findUser.save();
+
+  // Fire and forget email notification (Non-blocking)
+  sendEmail({
+    email: findUser.email,
+    subject: "Status Updated - HealthBridge",
+    message: `Your account status has been updated to ${status}.`,
+  });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, findUser, "User status updated successfully"));
+});
+
+export const getSystemAnalytics = asyncHandler(async(req,res)=>{})
+
