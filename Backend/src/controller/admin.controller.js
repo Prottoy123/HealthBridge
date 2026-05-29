@@ -165,5 +165,36 @@ export const updateUserStatus = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, findUser, "User status updated successfully"));
 });
 
-export const getSystemAnalytics = asyncHandler(async(req,res)=>{})
+export const getSystemAnalytics = asyncHandler(async (req, res) => {
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const endOfDay = new Date();
+  endOfDay.setHours(23, 59, 59, 999);
+
+  const [totalPatients, totalDoctors, pendingApprovals, appointmentsToday] =
+    await Promise.all([
+      User.countDocuments({ role: "PATIENT" }),
+      User.countDocuments({ role: "DOCTOR", status: "ACTIVE" }),
+      DoctorProfile.countDocuments({ isVerified: false }),
+      Appointment.countDocuments({
+        appointmentDate: {
+          $gte: startOfDay,
+          $lte: endOfDay,
+        },
+      }),
+    ]);
+
+    const payload = {
+    totalPatients,
+    totalDoctors,
+    pendingApprovals,
+    appointmentsToday,
+  };
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, payload, "System analytics retrieved successfully")
+    );
+})
 
