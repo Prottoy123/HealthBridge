@@ -327,5 +327,17 @@ export const getDoctorList = asyncHandler(async(req,res)=>{
     .json(new ApiResponse(200, payload, "Doctors list fetched successfully"));
 });
 
+export const analyzeSymptom = asyncHandler(async(req,res)=>{
+
+  const {symptoms} = req.body;
+
+  const aiResult = await analyzeSymptomService(symptoms);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, aiResult, "Symptoms analyzed successfully"));
+
+})
+
 
 
