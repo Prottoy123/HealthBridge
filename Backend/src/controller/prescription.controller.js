@@ -4,6 +4,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
 import { Prescription } from "../models/prescription.models.js";
+import { decodePrescriptionService } from "./src/services/decodePrescription.js";
 
 export const uploadPrescription = asyncHandler(async (req, res) => {
   const { title, doctorName, prescriptionDate } = req.body;
@@ -159,3 +160,25 @@ export const getPatientPrescriptions = asyncHandler(async(req,res)=>{
         ); 
   
 })
+
+export const decodePrescription = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    throw new ApiError(
+      400,
+      "প্রেসক্রিপশনের ছবি পাওয়া যায়নি। দয়া করে একটি ছবি আপলোড করুন।"
+    );
+  }
+
+  // STEP 2: Service Handshake
+  const extractedMedicines = await decodePrescriptionService(req.file);
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        extractedMedicines,
+        "Prescription decoded successfully"
+      )
+    );
+});
