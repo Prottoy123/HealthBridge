@@ -4,6 +4,7 @@ import { verifyJWT } from "../middleware/userAuth.middleware.js";
 import { restrictTo } from "../middleware/role.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
 import {
+  decodePrescription,
   getMyPrescriptions,
   getPatientPrescriptions,
   uploadPrescription,
@@ -31,5 +32,18 @@ router
 router
   .route("/patient/:patientId")
   .get(restrictTo("DOCTOR"), getPatientPrescriptions);
+
+  router
+  .route("/decode")
+  .post(
+    verifyJWT,                  
+    restrictTo(["PATIENT"]),     
+    upload.single("prescription"), 
+    decodePrescription           
+  );
+
+export default router;
+
+
 
 export default router;
