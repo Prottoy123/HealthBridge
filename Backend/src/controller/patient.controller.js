@@ -150,10 +150,14 @@ export const getAvailableSlots = asyncHandler(async (req, res) => {
 export const bookAppointment = asyncHandler(async (req, res) => {
   const { appointmentId } = req.params;
 
+  // STEP 1: Extract the exact field name defined in your Mongoose Schema
+  const { aiSymptomSummary } = req.body;
+
   if (!appointmentId) {
     throw new ApiError(400, "Appointment ID is required");
   }
 
+  // STEP 2: Database Update Logic
   const appointment = await Appointment.findOneAndUpdate(
     {
       _id: appointmentId,
@@ -163,9 +167,12 @@ export const bookAppointment = asyncHandler(async (req, res) => {
       $set: {
         status: "CONFIRMED",
         patientId: req.user._id,
+        // If the frontend sends aiSymptomSummary, it will be mapped exactly to my schema field
+        ...(aiSymptomSummary && { aiSymptomSummary }),
       },
-    },{
-      new:true,
+    },
+    {
+      new: true,
     }
   );
 
@@ -173,17 +180,13 @@ export const bookAppointment = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Slot is already booked or unavailable.");
   }
 
-  //Emit the real time notification to the staff
+  // STEP 3: Emit the real-time notification to the staff
   const io = req.app.get("io");
-
-  // need the same room name in frontend (staff_desk)
-  io.to("staff_desk").emit("queue_update", appointment); // নির্দিষ্ট রুমে ডেটা ব্রডকাস্ট করা
+  io.to("staff_desk").emit("queue_update", appointment);
 
   return res
     .status(200)
-    .json(
-      new ApiResponse(200, appointment, "Appointment booked successfully")
-    );
+    .json(new ApiResponse(200, appointment, "Appointment booked successfully"));
 });
 
 export const cancelAppoinment = asyncHandler(async (req, res) => {
