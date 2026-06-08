@@ -9,7 +9,9 @@ import {
   bookAppointment,
   cancelAppoinment,
   getDoctorList,
+  analyzeSymptom,
 } from "../controller/patient.controller.js";
+
 
 const router = Router();
 
@@ -45,5 +47,10 @@ router
 router
   .route("/cancel/:appoinmentId")
   .patch(verifyJWT, restrictTo(["PATIENT"]), cancelAppoinment);
+
+    router
+      .route("/analyze-symptoms")
+      .post(verifyJWT, restrictTo(["PATIENT"]), analyzeSymptom);
+
 
 export default router;
