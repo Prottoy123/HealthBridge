@@ -76,7 +76,7 @@ export const updateDoctorProfile = asyncHandler(async (req, res) => {
 });
 
 export const getDailySchedule = asyncHandler(async (req, res) => {
-  // Set time boundaries for "today" based on server time
+  // 1. Set time boundaries for "today" based on server time
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
 
@@ -84,7 +84,7 @@ export const getDailySchedule = asyncHandler(async (req, res) => {
   endOfDay.setHours(23, 59, 59, 999);
 
   const pipeline = [
-    // Filter today's active appointments for the logged-in doctor
+    // 2. Filter today's active appointments for the logged-in doctor
     {
       $match: {
         doctorId: new mongoose.Types.ObjectId(req.user._id),
@@ -100,7 +100,7 @@ export const getDailySchedule = asyncHandler(async (req, res) => {
     {
       $lookup: {
         from: "users",
-        localField: "patientId", // Fixed case-sensitivity (was PatientId)
+        localField: "patientId",
         foreignField: "_id",
         as: "patientBasicInfo",
       },
@@ -109,10 +109,10 @@ export const getDailySchedule = asyncHandler(async (req, res) => {
       $unwind: "$patientBasicInfo",
     },
 
-    // Get medical info (DOB, bloodGroup) from "patientprofiles" collection
+    // 4. Get only necessary profile info (DOB, emergencyContact) for lightweight view
     {
       $lookup: {
-        from: "patientprofiles", // Must match your exact DB collection name
+        from: "patientprofiles",
         localField: "patientId",
         foreignField: "userId",
         as: "patientMedicalData",
@@ -121,7 +121,7 @@ export const getDailySchedule = asyncHandler(async (req, res) => {
     {
       $unwind: {
         path: "$patientMedicalData",
-        preserveNullAndEmptyArrays: true, // Prevents pipeline crash if profile doesn't exist
+        preserveNullAndEmptyArrays: true,
       },
     },
 
@@ -144,11 +144,12 @@ export const getDailySchedule = asyncHandler(async (req, res) => {
       },
     },
 
-    // 6. Maintain Queue Order
+    // 6. Maintain Queue Order (Morning to Night)
     {
       $sort: { startTime: 1 },
     },
 
+    // 7. Strict Lightweight Projection: Removed heavy medical history and AI summary
     {
       $project: {
         _id: 1,
@@ -156,15 +157,15 @@ export const getDailySchedule = asyncHandler(async (req, res) => {
         startTime: 1,
         endTime: 1,
         status: 1,
-        aiSymptomSummary: 1,
 
-        // Grouping patient details into a clean, structured object
+        // Only keeping identification and basic contact options
         patientDetails: {
-          name: "$patientBasicInfo.fullName", // Taking from 1st lookup
+          name: "$patientBasicInfo.fullName",
           age: "$calculatedAge",
-          bloodGroup: "$patientMedicalData.bloodGroup",
-          allergies: "$patientMedicalData.allergies",
-          chronicDiseases: "$patientMedicalData.chronicDiseases",
+          email: "$patientBasicInfo.email",
+          emergencyContact: {
+            $ifNull: ["$patientMedicalData.emergencyContact", "N/A"],
+          },
         },
       },
     },
@@ -180,6 +181,115 @@ export const getDailySchedule = asyncHandler(async (req, res) => {
     .status(200)
     .json(
       new ApiResponse(200, "Daily schedule fetched successfully", dailySchedule)
+    );
+});
+
+export const getAppointmentDetails = asyncHandler(async (req, res) => {
+  const { appointmentId } = req.params;
+
+  if (!appointmentId) {
+    throw new ApiError(400, "Appointment ID is required");
+  }
+
+  const pipeline = [
+    // 1. Target the specific appointment and secure it to the logged-in doctor
+    {
+      $match: {
+        _id: new mongoose.Types.ObjectId(appointmentId),
+        doctorId: new mongoose.Types.ObjectId(req.user._id),
+      },
+    },
+
+    // 2. First Join: Get patient identity from "users" collection
+    {
+      $lookup: {
+        from: "users",
+        localField: "patientId",
+        foreignField: "_id",
+        as: "userInfo",
+      },
+    },
+    {
+      $unwind: "$userInfo",
+    },
+
+    // 3. Second Join: Get clinical profile from "patientprofiles" collection
+    {
+      $lookup: {
+        from: "patientprofiles",
+        localField: "patientId",
+        foreignField: "userId",
+        as: "patientProfile",
+      },
+    },
+    {
+      // CORRECTED: Fixed the syntax structure for conditional unwind
+      $unwind: {
+        path: "$patientProfile",
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+
+    // 4. Mathematical Engine: Dynamic age calculation using unified aliases
+    {
+      $addFields: {
+        calculatedAge: {
+          $cond: {
+            // CORRECTED: Swapped "patientMedicalData" with the actual alias "patientProfile"
+            if: { $ifNull: ["$patientProfile.dateOfBirth", false] },
+            then: {
+              $dateDiff: {
+                startDate: "$patientProfile.dateOfBirth",
+                endDate: "$$NOW",
+                unit: "year",
+              },
+            },
+            else: "N/A",
+          },
+        },
+      },
+    },
+
+    // 5. Deep Heavyweight Projection for Consultation Workspace
+    {
+      $project: {
+        _id: 1,
+        status: 1,
+        aiSymptomSummary: 1, // Exposed Gemini AI summary for the doctor
+
+        // Packing all compiled patient demographics & medical data
+        patientDetails: {
+          name: "$userInfo.fullName", // CORRECTED: Matched to userInfo alias
+          email: "$userInfo.email",
+          age: "$calculatedAge",
+          emergencyContact: {
+            $ifNull: ["$patientProfile.emergencyContact", "N/A"],
+          },
+          // CORRECTED: Explicit paths provided for nested array fields
+          bloodGroup: { $ifNull: ["$patientProfile.bloodGroup", "N/A"] },
+          allergies: { $ifNull: ["$patientProfile.allergies", []] }, // Safe empty array fallback
+          chronicDiseases: { $ifNull: ["$patientProfile.chronicDiseases", []] },
+        },
+      },
+    },
+  ];
+
+  const appointmentDetails = await Appointment.aggregate(pipeline);
+
+  // If the query returns empty, it means the ID is invalid or belongs to another doctor
+  if (!appointmentDetails || appointmentDetails.length === 0) {
+    throw new ApiError(404, "Appointment not found or you are not authorized");
+  }
+
+  // Returning the single finalized object directly without extra payload wraps
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        "Appointment details fetched successfully",
+        appointmentDetails[0]
+      )
     );
 });
 
