@@ -1,4 +1,4 @@
-import { User } from "../models/User.models"
+import { User } from "../models/User.models.js"
 import {ApiError} from '../utils/apiError.js'
 
 // this middleware will be used in routes after the authUser....
