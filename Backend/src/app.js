@@ -3,6 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import { initializeSocket } from "./sockets/socketHandler.js";
 
 const app = express();
 const server = createServer(app);
