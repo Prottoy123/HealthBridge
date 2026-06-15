@@ -6,6 +6,7 @@ import { ApiError } from "../utils/apiError.js";
 import { Appointment } from "../models/appoinment.models.js";
 import { DoctorProfile } from "../models/doctorProfile.models.js";
 import { FollowUp } from "../models/followUp.models.js";
+import {getRedis} from "../config/redis.config.js";
 
 export const updateDoctorProfile = asyncHandler(async (req, res) => {
   if (req.body.isVerified !== undefined || req.body.userId !== undefined) {
@@ -294,6 +295,7 @@ export const getAppointmentDetails = asyncHandler(async (req, res) => {
 });
 
 export const completeVisit = asyncHandler(async (req, res) => {
+
   const { appointmentId } = req.params;
   const { followUpDays } = req.body;
 
@@ -305,7 +307,10 @@ export const completeVisit = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Follow-up days are required");
   }
 
+  const redisTTl = followUpDays * 24 * 60 * 60; // Redis TTL in seconds
+
   const session = await mongoose.startSession();
+ 
   session.startTransaction();
 
   try {
@@ -354,6 +359,14 @@ export const completeVisit = asyncHandler(async (req, res) => {
     }
 
     await session.commitTransaction();
+
+    try {
+      const redisClient = getRedis();
+      const redisKey = `chat_unlock:${appointmentId}`;
+      const redisExecution = await redisClient.set(redisKey, "locked", "EX", redisTTl);
+    } catch (err) {
+      console.error("Failed to set Redis key for follow-up lock:", err);
+    }
 
     return res.status(200).json(
       new ApiResponse(
