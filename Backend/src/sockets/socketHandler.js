@@ -1,9 +1,9 @@
 import jwt from "jsonwebtoken";
 import { User } from "../models/User.models.js";
 import { ApiError } from "../utils/ApiError.js";
+import { initializeChatEvents } from "./chat.socket.js";
 
 export const initializeSocket = (io) => {
-
   io.use(async (socket, next) => {
     try {
       const token =
@@ -41,12 +41,15 @@ export const initializeSocket = (io) => {
     }
   });
 
-
   io.on("connection", (socket) => {
     console.log(
       `🟢 Authenticated User Connected: ${socket.user.fullName} (${socket.id})`
     );
 
+    //chat events
+    initializeChatEvents(io, socket);
+
+    //For the staff to access the appointment Queue
     socket.on("join_room", (appointmentId) => {
       if (!appointmentId) return;
 
