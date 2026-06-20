@@ -7,23 +7,22 @@ import { asyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
 import jwt from "jsonwebtoken";
 
-
 //generate tokens
-const generateAccessAndRefreshTokens = async(userId)=>{
-try {
-        const user = await User.findById(userId)
-        const accessToken = await user.generateAccessToken()
-        const refreshToken = await user.generateRefreshToken()
-        user.refreshToken = refreshToken
-        await user.save({ validateBeforeSave: false });
-        return { accessToken, refreshToken };
-    
-} catch (error) {
+const generateAccessAndRefreshTokens = async (userId) => {
+  try {
+    const user = await User.findById(userId);
+    const accessToken = await user.generateAccessToken();
+    const refreshToken = await user.generateRefreshToken();
+    user.refreshToken = refreshToken;
+    await user.save({ validateBeforeSave: false });
+    return { accessToken, refreshToken };
+  } catch (error) {
     throw new ApiError(
       500,
       "something went wrong while generating refresh and access token"
     );
-} }
+  }
+};
 
 //register User
 export const registerUser = asyncHandler(async (req, res) => {
@@ -95,39 +94,40 @@ export const registerUser = asyncHandler(async (req, res) => {
 
 //userlogin
 export const userLogin = asyncHandler(async (req, res) => {
-    const {email,password} = req.body
+  const { email, password } = req.body;
 
-    if (!email || !password) {
-        throw new ApiError(201,"Credentials Required")
-    }
+  if (!email || !password) {
+    throw new ApiError(201, "Credentials Required");
+  }
 
-    const user = await findOne({
-    $or:[
-        {email},{password}]
-    })
+  const user = await User.findOne({
+    $or: [{ email }, { password }],
+  });
 
-    if (!user) {
-        throw new ApiError(200,"user does not exist")
-    }
+  if (!user) {
+    throw new ApiError(200, "user does not exist");
+  }
 
-    const isPasswordValid = await user.isPasswordCorrect(password)
+  const isPasswordValid = await user.isPasswordCorrect(password);
 
-    if (!isPasswordValid) {
-        throw new ApiError(200,"password Doesnt match")
-    }
+  if (!isPasswordValid) {
+    throw new ApiError(200, "password Doesnt match");
+  }
 
-    const {accessToken,refreshToken} = await generateAccessAndRefreshTokens(user._id)
+  const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
+    user._id
+  );
 
-    const options = {
-        httpOnly: true,
-        secure: true
-    }
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
 
-    const loggedInUser = await User.findById(user._id).select(
-      "-password -refreshToken"
-    );
+  const loggedInUser = await User.findById(user._id).select(
+    "-password -refreshToken"
+  );
 
-    return res
+  return res
     .status(200)
     .cookie("accessToken", accessToken, options)
     .cookie("refreshToken", refreshToken, options)
@@ -145,17 +145,20 @@ export const userLogin = asyncHandler(async (req, res) => {
 });
 
 //user logout
-export const userLogout = asyncHandler (async(req,res)=>{
-
-    await User.findByIdAndUpdate(req.user._id, {
+export const userLogout = asyncHandler(async (req, res) => {
+  await User.findByIdAndUpdate(
+    req.user._id,
+    {
       $set: {
         refreshToken: undefined,
       },
-    },{
-        new:true,
-    });
+    },
+    {
+      new: true,
+    }
+  );
 
-     const options = {
+  const options = {
     httpOnly: true,
     secure: true,
   };
@@ -169,7 +172,6 @@ export const userLogout = asyncHandler (async(req,res)=>{
 
 //generate silent refresh token
 export const refreshAccessToken = asyncHandler(async (req, res) => {
-  
   const incomingRefreshToken =
     req.cookies.refreshToken || req.body.refreshToken;
 
@@ -223,8 +225,3 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
     );
   }
 });
-
-
-
-
-
