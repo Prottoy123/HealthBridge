@@ -31,10 +31,12 @@ app.use(cookieParser());
 import UserRouter from "./routes/user.routes.js";
 import medicalRecord from "./routes/medicalRecod.routes.js";
 import patient from "./routes/patient.routes.js";
+import chatRouter from "./routes/chat.routes.js";
 
 app.use("/api/v1/user", UserRouter);
 app.use("/api/v1/medical-records", medicalRecord);
 app.use("/api/v1/patient", patient);
+app.use("/api/v1/chat", chatRouter);
 
 initializeSocket(io);
 
