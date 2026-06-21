@@ -9,6 +9,7 @@ import {
   getPatientPrescriptions,
   uploadPrescription,
 } from "../controller/prescription.controller.js";
+import { rateLimiter } from "../middleware/rateLimiter.middleware.js";
 
 const router = Router();
 
@@ -37,7 +38,8 @@ router
   .route("/decode")
   .post(
     verifyJWT,                  
-    restrictTo(["PATIENT"]),     
+    restrictTo(["PATIENT"]), 
+    rateLimiter("vision_limit", 2, 3600),    
     upload.single("prescription"), 
     decodePrescription           
   );
