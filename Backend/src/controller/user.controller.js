@@ -207,6 +207,38 @@ export const changeCurrentPassword = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "Password changed successfully"));
 });
 
+//update Account Details 
+export const updateAccountDetails = asyncHandler(async (req, res) => {
+  const { fullName, phone } = req.body;
+
+  if (!fullName && !phone) {
+    throw new ApiError(
+      400,
+      "At least one field (fullName or phone) is required to update"
+    );
+  }
+
+  const updateData = {};
+  if (fullName) updateData.fullName = fullName;
+  if (phone) updateData.phone = phone;
+
+  const updatedUser = await User.findByIdAndUpdate(
+    req.user._id,
+    { $set: updateData },
+    { new: true, runValidators: true }
+  ).select("-password -refreshToken"); 
+
+  if (!updatedUser) {
+    throw new ApiError(404, "User account not found");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, updatedUser, "Account details updated successfully")
+    );
+});
+
 //generate silent refresh token
 export const refreshAccessToken = asyncHandler(async (req, res) => {
   const incomingRefreshToken =
