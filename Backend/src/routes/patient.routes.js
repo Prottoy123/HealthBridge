@@ -11,6 +11,7 @@ import {
   getDoctorList,
   analyzeSymptom,
 } from "../controller/patient.controller.js";
+import { aiRateLimiter } from "../middleware/rateLimiter.middleware.js";
 
 
 const router = Router();
@@ -50,7 +51,12 @@ router
 
     router
       .route("/analyze-symptoms")
-      .post(verifyJWT, restrictTo(["PATIENT"]), analyzeSymptom);
+      .post(
+        verifyJWT,
+        restrictTo(["PATIENT"]),
+        rateLimiter("symptom_limit", 4, 3600),
+        analyzeSymptom
+      );
 
 
 export default router;
