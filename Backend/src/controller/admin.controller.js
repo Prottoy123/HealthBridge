@@ -221,13 +221,12 @@ export const createStaff = asyncHandler(async (req, res) => {
     );
   }
 
-  //creating a temporary password using crypto module
   const temporaryPassword = crypto.randomBytes(4).toString("hex");
 
   const user = await User.create({
     fullName,
     email,
-    password: temporaryPassword, 
+    password: temporaryPassword,
     role: assignedRole,
     status: "ACTIVE",
   });
@@ -243,14 +242,37 @@ export const createStaff = asyncHandler(async (req, res) => {
     );
   }
 
+  const emailSubject = `Welcome to Health-Bridge - Your ${assignedRole} Account Details`;
+  const emailMessage = `
+Hello ${fullName},
+
+Welcome to the Health-Bridge Team! An internal ${assignedRole} account has been securely provisioned for you by the administration.
+
+Here are your login credentials:
+Email: ${email}
+Temporary Password: ${temporaryPassword}
+
+SECURITY NOTICE: 
+Please log in immediately and navigate to your Profile Settings to change this temporary password. Do not share this email with anyone.
+
+Regards,
+Health-Bridge Core System
+    `;
+
+  await sendEmail({
+    email: email,
+    subject: emailSubject,
+    message: emailMessage,
+  });
+
   return res.status(201).json(
     new ApiResponse(
       201,
       {
         user: createdUser,
-        temporaryPassword: temporaryPassword,
+        temporaryPassword: temporaryPassword, 
       },
-      `${assignedRole} account successfully provisioned. Please securely share the temporary password.`
+      `${assignedRole} account provisioned and credentials dispatched via email successfully.`
     )
   );
 });
