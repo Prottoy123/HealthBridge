@@ -198,3 +198,60 @@ export const getSystemAnalytics = asyncHandler(async (req, res) => {
     );
 })
 
+export const createStaff = asyncHandler(async (req, res) => {
+  const { fullName, email, role } = req.body;
+
+  if (!fullName || !email || !role) {
+    throw new ApiError(400, "Full name, email, and role are required");
+  }
+
+  const assignedRole = role.toUpperCase();
+  if (assignedRole !== "STAFF" && assignedRole !== "ADMIN") {
+    throw new ApiError(
+      403,
+      "Security Violation: Only STAFF or ADMIN roles can be provisioned here"
+    );
+  }
+
+  const existedUser = await User.findOne({ email });
+  if (existedUser) {
+    throw new ApiError(
+      409,
+      "An internal account with this email already exists"
+    );
+  }
+
+  //creating a temporary password using crypto module
+  const temporaryPassword = crypto.randomBytes(4).toString("hex");
+
+  const user = await User.create({
+    fullName,
+    email,
+    password: temporaryPassword, 
+    role: assignedRole,
+    status: "ACTIVE",
+  });
+
+  const createdUser = await User.findById(user._id).select(
+    "-password -refreshToken"
+  );
+
+  if (!createdUser) {
+    throw new ApiError(
+      500,
+      "Internal Server Error: Failed to provision the account"
+    );
+  }
+
+  return res.status(201).json(
+    new ApiResponse(
+      201,
+      {
+        user: createdUser,
+        temporaryPassword: temporaryPassword,
+      },
+      `${assignedRole} account successfully provisioned. Please securely share the temporary password.`
+    )
+  );
+});
+
