@@ -7,44 +7,40 @@ import { ApiError } from "../utils/apiError.js";
 import { Appointment } from "../models/appoinment.models.js";
 
 export const updatePatientProfile = asyncHandler(async (req, res) => {
-  const {
-    dateOfBirth,
-    bloodGroup,
-    allergies,
-    chronicDiseases,
-    emergencyContact,
-  } = req.body;
+  const allowedFields = [
+    "dateOfBirth",
+    "bloodGroup",
+    "allergies",
+    "chronicDiseases",
+    "emergencyContact",
+  ];
 
-  //to check any empty field is there or not in the object
-  if (Object.keys(req.body).length === 0) {
-    throw new ApiError(400, "At least one field is required to update");
+  const updateData = {};
+
+  // ডাইনামিক্যালি শুধু পাঠানো ডেটাগুলোই আপডেট অবজেক্টে পুশ করা হবে
+  allowedFields.forEach((field) => {
+    if (req.body[field] !== undefined) {
+      updateData[field] = req.body[field];
+    }
+  });
+
+  if (Object.keys(updateData).length === 0) {
+    throw new ApiError(400, "At least one valid field is required to update");
   }
 
-  const UpdateProfile = await PatientProfile.findOneAndUpdate(
-    {
-      userId: req.user._id,
-    },
-    {
-      $set: {
-        dateOfBirth,
-        bloodGroup,
-        allergies,
-        chronicDiseases,
-        emergencyContact,
-      },
-    },
-    {
-      new: true,
-    }
+  const updatedProfile = await PatientProfile.findOneAndUpdate(
+    { userId: req.user._id },
+    { $set: updateData },
+    { new: true, runValidators: true }
   );
 
-  if (!UpdateProfile) {
-    throw new ApiError(404, "something went wrong");
+  if (!updatedProfile) {
+    throw new ApiError(404, "Patient profile not found");
   }
 
   return res
     .status(200)
-    .json(new ApiResponse(200, "Profile Updated", UpdateProfile));
+    .json(new ApiResponse(200, updatedProfile, "Profile Updated Successfully"));
 });
 
 export const uploadMedicalRecord = asyncHandler(async (req, res) => {
