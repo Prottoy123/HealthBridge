@@ -4,6 +4,7 @@ import { asyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
 import { Appointment } from "../models/appoinment.models.js";
 import { DoctorProfile } from "../models/doctorProfile.models.js";
+import { getRedis } from "../config/redis.config.js";
 
 export const getPendingDoctors = asyncHandler(async (req, res) => {
   const { limit = 10, page = 1 } = req.query;
@@ -160,6 +161,18 @@ export const updateUserStatus = asyncHandler(async (req, res) => {
 });
 
 export const getSystemAnalytics = asyncHandler(async (req, res) => {
+  const redisClient = getRedis();
+  const cacheKey = "cache:admin:analytics";
+
+  // Check if analytics data is present in Redis cache
+  const cachedData = await redisClient.get(cacheKey);
+
+  if (cachedData) {
+    return res
+      .status(200)
+      .json(new ApiResponse(200, JSON.parse(cachedData), "Cached analytics data retrieved successfully"));
+  }
+
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
 
@@ -185,6 +198,11 @@ export const getSystemAnalytics = asyncHandler(async (req, res) => {
     pendingApprovals,
     appointmentsToday,
   };
+
+  // Cache the analytics data in Redis with a TTL of 5 minutes (300 seconds)
+  const payloadString = JSON.stringify(payload);
+await redisClient.set(cacheKey, payloadString, "EX", 300);
+
   return res
     .status(200)
     .json(
