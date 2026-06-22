@@ -5,6 +5,8 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
 import { Appointment } from "../models/appoinment.models.js";
+import { getRedis } from "../config/redis.config.js";
+
 
 export const updatePatientProfile = asyncHandler(async (req, res) => {
   const allowedFields = [
@@ -229,12 +231,24 @@ return res
 })
 
 export const getDoctorList = asyncHandler(async(req,res)=>{
+  const redisClient = getRedis();
 
   const {page=1,
     limit=10,
       specialization,
       search,
   } = req.query
+
+  const cacheKey = `cache:doctors:page_${page}:limit_${limit}:spec_${specialization}:search_${search}`;
+
+  const cachedData = await redisClient.get(cacheKey);
+
+  if (cachedData) {
+    const payload = JSON.parse(cachedData);
+    return res
+      .status(200)
+      .json(new ApiResponse(200, payload, "Doctors list fetched successfully (from cache)"));
+  }
 
   const pageNumber = parseInt(page)
   const limitNumber = parseInt(limit)
@@ -320,6 +334,10 @@ export const getDoctorList = asyncHandler(async(req,res)=>{
       limit: limitNumber,
     },
   };
+
+  // Cache the result in Redis for 5 minutes (300 seconds)
+    const payloadString = JSON.stringify(payload);
+    const setCache = await redisClient.set(cacheKey, payloadString, "EX", 300);
 
   return res
     .status(200)
