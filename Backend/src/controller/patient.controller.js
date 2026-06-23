@@ -7,7 +7,6 @@ import { ApiError } from "../utils/apiError.js";
 import { Appointment } from "../models/appoinment.models.js";
 import { getRedis } from "../config/redis.config.js";
 
-
 export const updatePatientProfile = asyncHandler(async (req, res) => {
   const allowedFields = [
     "dateOfBirth",
@@ -85,37 +84,37 @@ export const uploadMedicalRecord = asyncHandler(async (req, res) => {
   });
 
   //Database operations to save all the files in once
-try {
-  const createRecords = await MedicalRecord.insertMany(medicalRecordsData);
+  try {
+    const createRecords = await MedicalRecord.insertMany(medicalRecordsData);
 
-  if (!createRecords || createRecords.length === 0) {
-    throw new ApiError(500, "Failed to save medical records in database");
-  }
+    if (!createRecords || createRecords.length === 0) {
+      throw new ApiError(500, "Failed to save medical records in database");
+    }
 
-  return res
-    .status(201)
-    .json(
-      new ApiResponse(
-        201,
-        createRecords,
-        "Medical records uploaded successfully"
-      )
+    return res
+      .status(201)
+      .json(
+        new ApiResponse(
+          201,
+          createRecords,
+          "Medical records uploaded successfully"
+        )
+      );
+  } catch (error) {
+    if (successfulUploads && successfulUploads.length > 0) {
+      const deletePromises = successfulUploads.map((file) =>
+        deleteFromCloudinary(file.public_id)
+      );
+
+      await Promise.all(deletePromises);
+    }
+
+    throw new ApiError(
+      500,
+      error?.message ||
+        "Database transaction failed. Orphaned files cleaned up successfully."
     );
-} catch (error) {
-  if (successfulUploads && successfulUploads.length > 0) {
-    const deletePromises = successfulUploads.map((file) =>
-      deleteFromCloudinary(file.public_id)
-    );
-
-    await Promise.all(deletePromises);
   }
-
-  throw new ApiError(
-    500,
-    error?.message ||
-      "Database transaction failed. Orphaned files cleaned up successfully."
-  );
-}
 });
 
 export const getAvailableSlots = asyncHandler(async (req, res) => {
@@ -155,36 +154,55 @@ export const bookAppointment = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Appointment ID is required");
   }
 
-  // STEP 2: Database Update Logic
-  const appointment = await Appointment.findOneAndUpdate(
-    {
-      _id: appointmentId,
-      status: "PENDING",
-    },
-    {
-      $set: {
-        status: "CONFIRMED",
-        patientId: req.user._id,
-        // If the frontend sends aiSymptomSummary, it will be mapped exactly to my schema field
-        ...(aiSymptomSummary && { aiSymptomSummary }),
-      },
-    },
-    {
-      new: true,
-    }
-  );
+  const redisClient = getRedis();
 
-  if (!appointment) {
-    throw new ApiError(400, "Slot is already booked or unavailable.");
+  const cacheKey = "lock:slot:" + appointmentId;
+
+  const lock = await redisClient.set(cacheKey, "locked", "EX", 60, "NX");
+
+  if (!lock) {
+    throw new ApiError(
+      409,
+      "Slot is already being booked by another user. Please try again."
+    );
   }
 
-  // STEP 3: Emit the real-time notification to the staff
-  const io = req.app.get("io");
-  io.to("staff_desk").emit("queue_update", appointment);
+  // STEP 2: Database Update Logic
+  try {
+    const appointment = await Appointment.findOneAndUpdate(
+      {
+        _id: appointmentId,
+        status: "PENDING",
+      },
+      {
+        $set: {
+          status: "CONFIRMED",
+          patientId: req.user._id,
+          // If the frontend sends aiSymptomSummary, it will be mapped exactly to my schema field
+          ...(aiSymptomSummary && { aiSymptomSummary }),
+        },
+      },
+      {
+        new: true,
+      }
+    );
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, appointment, "Appointment booked successfully"));
+    if (!appointment) {
+      throw new ApiError(400, "Slot is already booked or unavailable.");
+    }
+
+    // STEP 3: Emit the real-time notification to the staff
+    const io = req.app.get("io");
+    io.to("staff_desk").emit("queue_update", appointment);
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, appointment, "Appointment booked successfully")
+      );
+  } finally {
+    await redisClient.del(cacheKey);
+  }
 });
 
 export const cancelAppoinment = asyncHandler(async (req, res) => {
@@ -222,22 +240,15 @@ export const cancelAppoinment = asyncHandler(async (req, res) => {
   // need the same room name in frontend (staff_desk)
   io.to("staff_desk").emit("queue_update", cancel); // নির্দিষ্ট রুমে ডেটা ব্রডকাস্ট করা
 
-return res
+  return res
     .status(200)
-    .json(
-      new ApiResponse(200, cancel, "Appointment cancelled successfully")
-    );
+    .json(new ApiResponse(200, cancel, "Appointment cancelled successfully"));
+});
 
-})
-
-export const getDoctorList = asyncHandler(async(req,res)=>{
+export const getDoctorList = asyncHandler(async (req, res) => {
   const redisClient = getRedis();
 
-  const {page=1,
-    limit=10,
-      specialization,
-      search,
-  } = req.query
+  const { page = 1, limit = 10, specialization, search } = req.query;
 
   const cacheKey = `cache:doctors:page_${page}:limit_${limit}:spec_${specialization}:search_${search}`;
 
@@ -247,11 +258,17 @@ export const getDoctorList = asyncHandler(async(req,res)=>{
     const payload = JSON.parse(cachedData);
     return res
       .status(200)
-      .json(new ApiResponse(200, payload, "Doctors list fetched successfully (from cache)"));
+      .json(
+        new ApiResponse(
+          200,
+          payload,
+          "Doctors list fetched successfully (from cache)"
+        )
+      );
   }
 
-  const pageNumber = parseInt(page)
-  const limitNumber = parseInt(limit)
+  const pageNumber = parseInt(page);
+  const limitNumber = parseInt(limit);
 
   const skipValue = (pageNumber - 1) * limitNumber;
 
@@ -304,11 +321,8 @@ export const getDoctorList = asyncHandler(async(req,res)=>{
     // Final Stage - The Parallel Engine
     {
       $facet: {
-        // doctorlist with pagination 
-        doctorsList: [
-          { $skip: skipValue },
-           { $limit: limitNumber }
-          ],
+        // doctorlist with pagination
+        doctorsList: [{ $skip: skipValue }, { $limit: limitNumber }],
 
         // total doctor count seperately
         totalCount: [{ $count: "total" }],
@@ -336,25 +350,20 @@ export const getDoctorList = asyncHandler(async(req,res)=>{
   };
 
   // Cache the result in Redis for 5 minutes (300 seconds)
-    const payloadString = JSON.stringify(payload);
-    const setCache = await redisClient.set(cacheKey, payloadString, "EX", 300);
+  const payloadString = JSON.stringify(payload);
+  const setCache = await redisClient.set(cacheKey, payloadString, "EX", 300);
 
   return res
     .status(200)
     .json(new ApiResponse(200, payload, "Doctors list fetched successfully"));
 });
 
-export const analyzeSymptom = asyncHandler(async(req,res)=>{
-
-  const {symptoms} = req.body;
+export const analyzeSymptom = asyncHandler(async (req, res) => {
+  const { symptoms } = req.body;
 
   const aiResult = await analyzeSymptomService(symptoms);
 
   return res
     .status(200)
     .json(new ApiResponse(200, aiResult, "Symptoms analyzed successfully"));
-
-})
-
-
-
+});
