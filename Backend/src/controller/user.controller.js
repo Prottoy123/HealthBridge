@@ -1,6 +1,6 @@
 import { User } from "../models/User.models.js";
 import { PatientProfile } from "../models/PatientProfile.models.js";
-import { DoctorProfile } from "../models/DoctorProfile.models.js";
+import { DoctorProfile } from "../models/doctorProfile.models.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";

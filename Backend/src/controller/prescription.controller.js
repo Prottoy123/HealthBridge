@@ -4,7 +4,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
 import { Prescription } from "../models/prescription.models.js";
-import { decodePrescriptionService } from "./src/services/decodePrescription.js";
+import { decodePrescriptionService } from "../services/decodePrescription.js";
 
 export const uploadPrescription = asyncHandler(async (req, res) => {
   const { title, doctorName, prescriptionDate } = req.body;

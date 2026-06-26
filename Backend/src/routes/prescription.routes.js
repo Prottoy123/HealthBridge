@@ -1,5 +1,4 @@
 import { Router } from "express";
-
 import { verifyJWT } from "../middleware/userAuth.middleware.js";
 import { restrictTo } from "../middleware/role.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
@@ -41,11 +40,7 @@ router
     restrictTo(["PATIENT"]), 
     rateLimiter("vision_limit", 2, 3600),    
     upload.single("prescription"), 
-    decodePrescription           
+    decodePrescription         
   );
-
-export default router;
-
-
 
 export default router;

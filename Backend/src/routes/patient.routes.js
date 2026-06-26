@@ -2,6 +2,7 @@ import { Router } from "express";
 import { upload } from "../middleware/multer.middleware.js";
 import { verifyJWT } from "../middleware/userAuth.middleware.js";
 import { restrictTo } from "../middleware/role.middleware.js";
+import {rateLimiter} from "../middleware/rateLimiter.middleware.js"
 import {
   uploadMedicalRecord,
   updatePatientProfile,
@@ -11,7 +12,6 @@ import {
   getDoctorList,
   analyzeSymptom,
 } from "../controller/patient.controller.js";
-import { aiRateLimiter } from "../middleware/rateLimiter.middleware.js";
 
 
 const router = Router();
