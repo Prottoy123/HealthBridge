@@ -2,7 +2,7 @@ import { Router } from "express";
 import { upload } from "../middleware/multer.middleware.js";
 import { verifyJWT } from "../middleware/userAuth.middleware.js";
 import { restrictTo } from "../middleware/role.middleware.js";
-import {rateLimiter} from "../middleware/rateLimiter.middleware.js"
+import { rateLimiter } from "../middleware/rateLimiter.middleware.js";
 import {
   uploadMedicalRecord,
   updatePatientProfile,
@@ -12,7 +12,6 @@ import {
   getDoctorList,
   analyzeSymptom,
 } from "../controller/patient.controller.js";
-
 
 const router = Router();
 
@@ -27,11 +26,11 @@ router
 
 // 2. Profile & Medical Records Routes
 router
-  .route("/profile")
+  .route("/get-profile")
   .get(verifyJWT, restrictTo(["PATIENT"]), getPatientProfile);
 
 router
-  .route("/profile")
+  .route("/update-profile")
   .patch(verifyJWT, restrictTo(["PATIENT"]), updatePatientProfile);
 
 router
@@ -53,14 +52,13 @@ router
   .route("/cancel/:appoinmentId")
   .patch(verifyJWT, restrictTo(["PATIENT"]), cancelAppoinment);
 
-    router
-      .route("/analyze-symptoms")
-      .post(
-        verifyJWT,
-        restrictTo(["PATIENT"]),
-        rateLimiter("symptom_limit", 4, 3600),
-        analyzeSymptom
-      );
-
+router
+  .route("/analyze-symptoms")
+  .post(
+    verifyJWT,
+    restrictTo(["PATIENT"]),
+    rateLimiter("symptom_limit", 4, 3600),
+    analyzeSymptom
+  );
 
 export default router;
