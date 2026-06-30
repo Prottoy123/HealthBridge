@@ -28,6 +28,10 @@ router
 // 2. Profile & Medical Records Routes
 router
   .route("/profile")
+  .get(verifyJWT, restrictTo(["PATIENT"]), getPatientProfile);
+
+router
+  .route("/profile")
   .patch(verifyJWT, restrictTo(["PATIENT"]), updatePatientProfile);
 
 router
