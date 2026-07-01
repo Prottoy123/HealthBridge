@@ -10,7 +10,6 @@ import { getRedis } from "../config/redis.config.js";
 export const getPatientProfile = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
-  // Step 2: The Joining Engine
   const profile = await PatientProfile.findOne({ userId }).populate(
     "userId",
     "fullName email username"
@@ -23,27 +22,11 @@ export const getPatientProfile = asyncHandler(async (req, res) => {
     );
   }
 
-  // Step 4: Data Transformation (Frontend-Friendly Payload)
-  const payload = {
-    basicInfo: {
-      id: profile.userId._id,
-      fullName: profile.userId.fullName,
-      username: profile.userId.username,
-      email: profile.userId.email,
-    },
-    medicalInfo: {
-      dateOfBirth: profile.dateOfBirth,
-      bloodGroup: profile.bloodGroup,
-      allergies: profile.allergies,
-      emergencyContact: profile.emergencyContact,
-    },
-  };
-
-  // Step 5: Secure Response Delivery
+  // ডেটা স্ট্রাকচার ফ্ল্যাট করা হয়েছে: কোনো basicInfo বা medicalInfo র‍্যাপার নেই
   return res
     .status(200)
     .json(
-      new ApiResponse(200, payload, "Patient profile fetched successfully")
+      new ApiResponse(200, profile, "Patient profile fetched successfully")
     );
 });
 

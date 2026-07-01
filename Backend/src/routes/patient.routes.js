@@ -11,6 +11,8 @@ import {
   cancelAppoinment,
   getDoctorList,
   analyzeSymptom,
+  getPatientProfile,
+  
 } from "../controller/patient.controller.js";
 
 const router = Router();
@@ -27,7 +29,7 @@ router
 // 2. Profile & Medical Records Routes
 router
   .route("/get-profile")
-  .get(verifyJWT, restrictTo(["PATIENT"]), getPatientProfile);
+  .get(verifyJWT, restrictTo(["PATIENT"]),getPatientProfile );
 
 router
   .route("/update-profile")
