@@ -121,7 +121,10 @@ export const verifyDoctor = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, doctor, "Doctor verified successfully"));
+    .json(new ApiResponse(200, {
+      doctorProfile: doctor,   
+      userAccount: updatedUser 
+    }, "Doctor verified successfully"));
 });
 
 export const updateUserStatus = asyncHandler(async (req, res) => {
