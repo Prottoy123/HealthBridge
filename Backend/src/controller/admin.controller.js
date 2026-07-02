@@ -79,42 +79,49 @@ export const verifyDoctor = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Doctor ID is required");
   }
 
-  const getDoctor = await DoctorProfile.findById({ _id: doctorId }).populate(
+  const doctor = await DoctorProfile.findById(doctorId).populate(
     "userId",
     "email status"
   );
 
-  if (!getDoctorProfile) {
+  if (!doctor) {
     throw new ApiError(404, "Doctor profile not found");
   }
 
-  if (getDoctor.isVerified === true) {
-    throw new ApiError(400, "Doctor already verified");
+  if (doctor.isVerified) {
+    throw new ApiError(400, "Doctor is already verified");
   }
 
-  getDoctorProfile.isVerified = true;
-  await getDoctorProfile.save();
+  doctor.isVerified = true;
+  await doctor.save();
 
   const updatedUser = await User.findByIdAndUpdate(
-    getDoctorProfile.userId._id,
+    doctor.userId._id,
     { $set: { status: "ACTIVE" } },
     { new: true }
   );
 
-  if (!updateDoctor) {
-    throw new ApiError(500, "Failed to verify doctor");
+  if (!updatedUser) {
+    throw new ApiError(500, "Failed to update the user status to ACTIVE");
   }
 
-  sendEmail({
-    email: getDoctorProfile.userId.email,
-    subject: "Verification Successful - HealthBridge",
-    message:
-      "Congratulations! Your profile has been verified by the Admin. Your account is now ACTIVE and you can start generating your slots.",
-  });
+  try {
+    await sendEmail({
+      email: doctor.userId.email,
+      subject: "Verification Successful - HealthBridge",
+      message:
+        "Congratulations! Your profile has been verified by the Admin. Your account is now ACTIVE and you can start generating your slots.",
+    });
+  } catch (error) {
+    console.error(
+      "Doctor verified, but failed to send confirmation email:",
+      error
+    );
+  }
 
   return res
     .status(200)
-    .json(new ApiResponse(200, updateDoctor, "Doctor verified successfully"));
+    .json(new ApiResponse(200, doctor, "Doctor verified successfully"));
 });
 
 export const updateUserStatus = asyncHandler(async (req, res) => {
