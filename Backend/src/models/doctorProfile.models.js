@@ -70,4 +70,4 @@ const doctorProfileSchema = new Schema(
   },
   { timestamps: true }
 );
-export const DoctorProfile = mongoose.model("DoctorProfile", doctorProfileSchema);
+export const DoctorProfile = mongoose.models.DoctorProfile || mongoose.model("DoctorProfile", doctorProfileSchema);
