@@ -1,7 +1,12 @@
 import { Router } from "express";
 import { verifyJWT } from "../middleware/userAuth.middleware.js";
 import { restrictTo } from "../middleware/role.middleware.js";
-import { completeVisit, getDailySchedule, updateDoctorProfile } from "../controller/doctor.controller.js";
+import {
+  completeVisit,
+  getDailySchedule,
+  getDoctorProfile,
+  updateDoctorProfile,
+} from "../controller/doctor.controller.js";
 
 const router = Router();
 
@@ -14,6 +19,10 @@ router
   .route("/complete-visit/:appointmentId")
   .patch(restrictTo("DOCTOR"), completeVisit);
 
-router.route("/profile").patch(restrictTo("DOCTOR"), updateDoctorProfile);
+router.route("/get-profile").get(restrictTo("DOCTOR"), getDoctorProfile);
+
+router
+  .route("/update-profile")
+  .patch(restrictTo("DOCTOR"), updateDoctorProfile);
 
 export default router;

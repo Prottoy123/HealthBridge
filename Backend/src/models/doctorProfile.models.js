@@ -1,4 +1,5 @@
 import mongoose, { Schema } from "mongoose";
+import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const doctorProfileSchema = new Schema(
   {
@@ -8,21 +9,24 @@ const doctorProfileSchema = new Schema(
       required: true,
       unique: true,
     },
+    // নতুন ফিল্ড: BM&DC Registration Number
+    bmdcRegistration: {
+      type: String,
+      trim: true,
+      // required: true দেওয়া যাবে না, কারণ রেজিস্ট্রেশনের সময় এটি থাকবে না
+    },
     specialization: {
       type: String,
-      required: true,
       trim: true,
     },
     qualifications: [
       {
         type: String,
         trim: true,
-        required: true,
       },
     ],
     experienceYears: {
       type: Number,
-      required: true,
       min: [0, "Experience cannot be negative"],
     },
     about: {
@@ -31,33 +35,43 @@ const doctorProfileSchema = new Schema(
     },
     consultationFee: {
       type: Number,
-      required: true,
       min: [0, "Fee cannot be negative"],
     },
     slotDuration: {
       type: Number,
       default: 15,
-      required: true,
     },
     workingDays: [
       {
         type: String,
         trim: true,
         enum: {
-          values: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+          values: [
+            "Sunday",
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+          ],
           message: "{VALUE} is not a valid working day",
         },
       },
     ],
     shiftStartTime: {
       type: String,
-      required: true,
-      match: [/^([01]\d|2[0-3]):?([0-5]\d)$/, "Please provide a valid 24-hour time format (e.g., 18:00)"],
+      match: [
+        /^([01]\d|2[0-3]):?([0-5]\d)$/,
+        "Please provide a valid 24-hour time format (e.g., 18:00)",
+      ],
     },
     shiftEndTime: {
       type: String,
-      required: true,
-      match: [/^([01]\d|2[0-3]):?([0-5]\d)$/, "Please provide a valid 24-hour time format (e.g., 21:00)"],
+      match: [
+        /^([01]\d|2[0-3]):?([0-5]\d)$/,
+        "Please provide a valid 24-hour time format (e.g., 21:00)",
+      ],
     },
     roomNumber: {
       type: String,
@@ -70,4 +84,8 @@ const doctorProfileSchema = new Schema(
   },
   { timestamps: true }
 );
-export const DoctorProfile = mongoose.models.DoctorProfile || mongoose.model("DoctorProfile", doctorProfileSchema);
+doctorProfileSchema.plugin(mongooseAggregatePaginate);
+
+export const DoctorProfile =
+  mongoose.models.DoctorProfile ||
+  mongoose.model("DoctorProfile", doctorProfileSchema);

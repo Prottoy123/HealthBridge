@@ -8,6 +8,23 @@ import { DoctorProfile } from "../models/doctorProfile.models.js";
 import { FollowUp } from "../models/followUp.models.js";
 import {getRedis} from "../config/redis.config.js";
 
+export const getDoctorProfile = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+
+  const profile = await DoctorProfile.findOne({ userId }).populate(
+    "userId",
+    "fullName email profileImage status role" 
+  );
+
+  if (!profile) {
+    throw new ApiError(404, "Doctor profile not found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, profile, "Doctor profile fetched successfully"));
+});
+
 export const updateDoctorProfile = asyncHandler(async (req, res) => {
   if (req.body.isVerified !== undefined || req.body.userId !== undefined) {
     throw new ApiError(
