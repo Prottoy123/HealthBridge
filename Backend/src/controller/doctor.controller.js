@@ -81,8 +81,8 @@ export const updateDoctorProfile = asyncHandler(async (req, res) => {
 
   const updatedProfile = await DoctorProfile.findOneAndUpdate(
     { userId: req.user._id },
-    { $set: updateData }, 
-    { new: true, runValidators: true }
+    { $set: updateData },
+    { returnDocument: "after", runValidators: true }
   );
 
   if (!updatedProfile) {
