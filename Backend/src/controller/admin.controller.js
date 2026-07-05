@@ -5,6 +5,9 @@ import { ApiError } from "../utils/apiError.js";
 import { Appointment } from "../models/appoinment.models.js";
 import { DoctorProfile } from "../models/doctorProfile.models.js";
 import { getRedis } from "../config/redis.config.js";
+import { User } from "../models/User.models.js";
+import { sendEmail } from "../utils/sendMail.js";
+
 
 export const getPendingDoctors = asyncHandler(async (req, res) => {
   const { limit = 10, page = 1 } = req.query;
