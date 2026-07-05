@@ -23,7 +23,6 @@ export const getPatientProfile = asyncHandler(async (req, res) => {
     );
   }
 
-  // ডেটা স্ট্রাকচার ফ্ল্যাট করা হয়েছে: কোনো basicInfo বা medicalInfo র‍্যাপার নেই
   return res
     .status(200)
     .json(
@@ -42,7 +41,6 @@ export const updatePatientProfile = asyncHandler(async (req, res) => {
 
   const updateData = {};
 
-  // ডাইনামিক্যালি শুধু পাঠানো ডেটাগুলোই আপডেট অবজেক্টে পুশ করা হবে
   allowedFields.forEach((field) => {
     if (req.body[field] !== undefined) {
       updateData[field] = req.body[field];
@@ -262,7 +260,7 @@ export const cancelAppoinment = asyncHandler(async (req, res) => {
   //Emit the real time notification to the staff
   const io = req.app.get("io");
   // need the same room name in frontend (staff_desk)
-  io.to("staff_desk").emit("queue_update", cancel); // নির্দিষ্ট রুমে ডেটা ব্রডকাস্ট করা
+  io.to("staff_desk").emit("queue_update", cancel); 
 
   return res
     .status(200)
@@ -271,11 +269,8 @@ export const cancelAppoinment = asyncHandler(async (req, res) => {
 
 export const getDoctorList = asyncHandler(async (req, res) => {
   const redisClient = getRedis();
-
   const { page = 1, limit = 10, specialization, search } = req.query;
-
   const cacheKey = `cache:doctors:page_${page}:limit_${limit}:spec_${specialization}:search_${search}`;
-
   const cachedData = await redisClient.get(cacheKey);
 
   if (cachedData) {
@@ -291,9 +286,8 @@ export const getDoctorList = asyncHandler(async (req, res) => {
       );
   }
 
-  const pageNumber = parseInt(page);
-  const limitNumber = parseInt(limit);
-
+  const pageNumber = Math.max(1, parseInt(page) || 1);
+  const limitNumber = parseInt(limit) || 10;
   const skipValue = (pageNumber - 1) * limitNumber;
 
   const pipeline = [
@@ -303,7 +297,6 @@ export const getDoctorList = asyncHandler(async (req, res) => {
         ...(specialization && { specialization }),
       },
     },
-
     //second stage - joining the user models fields in this table.
     {
       $lookup: {
@@ -313,12 +306,10 @@ export const getDoctorList = asyncHandler(async (req, res) => {
         as: "User_details",
       },
     },
-
     //Third Stage - to convert array into object
     {
       $unwind: "$User_details",
     },
-
     // Fourth Stage - Deep Filtering with Regex
     {
       $match: {
@@ -330,39 +321,31 @@ export const getDoctorList = asyncHandler(async (req, res) => {
         }),
       },
     },
-
-    //5th - showing all the details
+    //5th - showing all the details (Update: bmdcRegistration added)
     {
       $project: {
         qualifications: 1,
         experienceYears: 1,
         consultationFee: 1,
+        bmdcRegistration: 1, 
         "User_details.name": 1,
         "User_details.profileImage": 1,
       },
     },
-
     // Final Stage - The Parallel Engine
     {
       $facet: {
-        // doctorlist with pagination
         doctorsList: [{ $skip: skipValue }, { $limit: limitNumber }],
-
-        // total doctor count seperately
         totalCount: [{ $count: "total" }],
       },
     },
   ];
 
   const list = await DoctorProfile.aggregate(pipeline);
-
   const doctors = list[0]?.doctorsList || [];
   const totalDocs = list[0]?.totalCount[0]?.total || 0;
-
-  // pagination math
   const totalPages = Math.ceil(totalDocs / limitNumber);
 
-  // for frontend payload delivery
   const payload = {
     doctors,
     pagination: {
@@ -373,9 +356,8 @@ export const getDoctorList = asyncHandler(async (req, res) => {
     },
   };
 
-  // Cache the result in Redis for 5 minutes (300 seconds)
   const payloadString = JSON.stringify(payload);
-  const setCache = await redisClient.set(cacheKey, payloadString, "EX", 300);
+  await redisClient.set(cacheKey, payloadString, "EX", 300);
 
   return res
     .status(200)

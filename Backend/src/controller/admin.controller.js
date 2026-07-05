@@ -13,14 +13,12 @@ export const getPendingDoctors = asyncHandler(async (req, res) => {
   const pageNumber = Math.max(1, parseInt(page, 10) || 1);
 
   const pipeline = [
-    //1st stage
     {
       $match: {
         isVerified: false,
       },
     },
 
-    //2nd Stage
     {
       $lookup: {
         from: "users",
@@ -30,16 +28,16 @@ export const getPendingDoctors = asyncHandler(async (req, res) => {
       },
     },
 
-    //3rd stage
     {
       $unwind: "$User_details",
     },
-    //4th Stage
+
     {
       $project: {
         specialization: 1,
         qualifications: 1,
         experienceYears: 1,
+        bmdcRegistration: 1, 
         "User_details.fullName": 1,
         "User_details.email": 1,
       },

@@ -27,6 +27,7 @@ export const updateDoctorProfile = asyncHandler(async (req, res) => {
     "specialization",
     "workingDays",
     "qualifications",
+    "bmdcRegistration",
   ];
 
   const updateData = {};
@@ -63,7 +64,7 @@ export const updateDoctorProfile = asyncHandler(async (req, res) => {
 
   const updatedProfile = await DoctorProfile.findOneAndUpdate(
     { userId: req.user._id },
-    { $set: updateData }, // $set দিয়ে পুরো অবজেক্ট পাস করা হলো
+    { $set: updateData }, 
     { new: true, runValidators: true }
   );
 
@@ -73,7 +74,7 @@ export const updateDoctorProfile = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, "Profile updated successfully", updatedProfile));
+    .json(new ApiResponse(200, updatedProfile,"Profile updated successfully"));
 });
 
 export const getDailySchedule = asyncHandler(async (req, res) => {
