@@ -93,7 +93,6 @@ function PatientProfileSettings() {
 
   return (
     <div className="max-w-4xl mx-auto p-6 md:p-10 bg-white rounded-3xl border border-slate-100 shadow-[0_20px_50px_rgba(15,23,42,0.06)] transition-all duration-300 hover:shadow-[0_30px_60px_rgba(15,23,42,0.08)]">
-      {/* ================= IDENTITY HEADER SECTION ================= */}
       <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6 pb-6 border-b border-slate-100 mb-8">
         <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
           {/* Avatar Circle */}
