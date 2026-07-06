@@ -7,6 +7,7 @@ import { asyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
 import { Appointment } from "../models/appoinment.models.js";
 import { getRedis } from "../config/redis.config.js";
+import { analyzeSymptomService } from "../services/analyzeSymptomService.js";
 
 export const getPatientProfile = asyncHandler(async (req, res) => {
   const userId = req.user._id;
@@ -140,11 +141,12 @@ export const uploadMedicalRecord = asyncHandler(async (req, res) => {
 });
 
 export const getAvailableSlots = asyncHandler(async (req, res) => {
-  const { doctorId, date } = req.query;
+const { doctorId } = req.params; 
+const { date } = req.query; 
 
-  if (!doctorId || !date) {
-    throw new ApiError(400, "DoctorId and Date are required");
-  }
+if (!doctorId || !date) {
+  throw new ApiError(400, "DoctorId and Date are required");
+}
 
   const targetDate = new Date(date);
 
