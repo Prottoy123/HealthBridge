@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
@@ -7,7 +8,6 @@ import { DoctorProfile } from "../models/doctorProfile.models.js";
 import { getRedis } from "../config/redis.config.js";
 import { User } from "../models/User.models.js";
 import { sendEmail } from "../utils/sendMail.js";
-
 
 export const getPendingDoctors = asyncHandler(async (req, res) => {
   const { limit = 10, page = 1 } = req.query;
@@ -40,7 +40,7 @@ export const getPendingDoctors = asyncHandler(async (req, res) => {
         specialization: 1,
         qualifications: 1,
         experienceYears: 1,
-        bmdcRegistration: 1, 
+        bmdcRegistration: 1,
         "User_details.fullName": 1,
         "User_details.email": 1,
       },
@@ -120,12 +120,16 @@ export const verifyDoctor = asyncHandler(async (req, res) => {
     );
   }
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, {
-      doctorProfile: doctor,   
-      userAccount: updatedUser 
-    }, "Doctor verified successfully"));
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        doctorProfile: doctor,
+        userAccount: updatedUser,
+      },
+      "Doctor verified successfully"
+    )
+  );
 });
 
 export const updateUserStatus = asyncHandler(async (req, res) => {
@@ -181,7 +185,13 @@ export const getSystemAnalytics = asyncHandler(async (req, res) => {
   if (cachedData) {
     return res
       .status(200)
-      .json(new ApiResponse(200, JSON.parse(cachedData), "Cached analytics data retrieved successfully"));
+      .json(
+        new ApiResponse(
+          200,
+          JSON.parse(cachedData),
+          "Cached analytics data retrieved successfully"
+        )
+      );
   }
 
   const startOfDay = new Date();
@@ -212,7 +222,7 @@ export const getSystemAnalytics = asyncHandler(async (req, res) => {
 
   // Cache the analytics data in Redis with a TTL of 5 minutes (300 seconds)
   const payloadString = JSON.stringify(payload);
-await redisClient.set(cacheKey, payloadString, "EX", 300);
+  await redisClient.set(cacheKey, payloadString, "EX", 300);
 
   return res
     .status(200)
