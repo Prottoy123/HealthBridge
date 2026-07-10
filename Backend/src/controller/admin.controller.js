@@ -132,6 +132,60 @@ export const verifyDoctor = asyncHandler(async (req, res) => {
   );
 });
 
+export const getSystemUsers = asyncHandler(async (req, res) => {
+  const { page = 1, limit = 10, search, role, status } = req.query;
+
+  const pageNumber = parseInt(page, 10);
+  const limitNumber = parseInt(limit, 10);
+  const skip = (pageNumber - 1) * limitNumber;
+
+  const query = {
+    _id: { $ne: req.user._id },
+  };
+
+  if (role) {
+    query.role = role.toUpperCase();
+  }
+
+  if (status) {
+    query.status = status.toUpperCase();
+  }
+
+  if (search) {
+    query.$or = [
+      { fullName: { $regex: search, $options: "i" } }, 
+      { email: { $regex: search, $options: "i" } },
+    ];
+  }
+
+
+  const [users, totalUsers] = await Promise.all([
+    User.find(query)
+      .select("-password -refreshToken") 
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNumber),
+    User.countDocuments(query),
+  ]);
+
+  const totalPages = Math.ceil(totalUsers / limitNumber);
+
+  const payload = {
+    records: users,
+    pagination: {
+      totalRecords: totalUsers,
+      totalPages,
+      currentPage: pageNumber,
+      hasNextPage: pageNumber < totalPages,
+      hasPrevPage: pageNumber > 1,
+    },
+  };
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, payload, "System users retrieved successfully"));
+});
+
 export const updateUserStatus = asyncHandler(async (req, res) => {
   const { userId } = req.params;
   const { status } = req.body;
