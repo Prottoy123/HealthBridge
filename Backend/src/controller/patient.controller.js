@@ -316,21 +316,21 @@ export const getDoctorList = asyncHandler(async (req, res) => {
     {
       $match: {
         ...(search && {
-          "User_details.name": {
+          "User_details.fullName": {
             $regex: search,
             $options: "i",
           },
         }),
       },
     },
-    //5th - showing all the details (Update: bmdcRegistration added)
+    //5th - showing all the details 
     {
       $project: {
         qualifications: 1,
         experienceYears: 1,
         consultationFee: 1,
-        bmdcRegistration: 1, 
-        "User_details.name": 1,
+        bmdcRegistration: 1,
+        "User_details.fullName": 1,
         "User_details.profileImage": 1,
       },
     },
