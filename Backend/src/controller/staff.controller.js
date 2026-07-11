@@ -6,16 +6,29 @@ import { Appointment } from "../models/appoinment.models.js";
 import { DoctorProfile } from "../models/doctorProfile.models.js";
 import { FollowUp } from "../models/followUp.models.js";
 
+const timeToMinutes = (timeString) => {
+  if (!timeString) return null;
+  const [hours, minutes] = timeString.split(":").map(Number);
+  return hours * 60 + minutes;
+};
+
+const minutesToTime = (totalMinutes) => {
+  const hours = String(Math.floor(totalMinutes / 60)).padStart(2, "0");
+  const minutes = String(totalMinutes % 60).padStart(2, "0");
+  return `${hours}:${minutes}`;
+};
+
 export const generateSlots = asyncHandler(async (req, res) => {
-  const { doctorId, date } = req.body;
+  const { doctorId, date, startTime, endTime, duration } = req.body;
 
   if (!doctorId || !date) {
-    throw new ApiError(400, "DoctorId and date are required");
+    throw new ApiError(400, "Doctor ID and date are mandatory fields");
   }
 
-  const doctorData = await DoctorProfile.findOne({
-    userId: doctorId,
-  });
+  const doctorData = await DoctorProfile.findOne({ userId: doctorId });
+  if (!doctorData) {
+    throw new ApiError(404, "Doctor profile not found in the system");
+  }
 
   const appointmentCheck = await Appointment.find({
     doctorId,
@@ -24,58 +37,58 @@ export const generateSlots = asyncHandler(async (req, res) => {
 
   if (appointmentCheck.length > 0) {
     throw new ApiError(
-      400,
-      "Appointments already exist for this doctor on the specified date"
+      409, 
+      "Slots have already been generated for this doctor on the specified date"
     );
   }
 
-  // Taking Data from the DcotroProfile
-  const { shiftStartTime, shiftEndTime, slotDuration } = doctorData;
+  const finalStartTime = startTime || doctorData.shiftStartTime;
+  const finalEndTime = endTime || doctorData.shiftEndTime;
+  const slotDuration = parseInt(duration || doctorData.slotDuration, 10);
 
-  //  convert the start time into minutes
-  const startParts = shiftStartTime.split(":"); // ["17", "30"]
-  let currentMinutes = parseInt(startParts[0]) * 60 + parseInt(startParts[1]);
+  if (!finalStartTime || !finalEndTime || !slotDuration) {
+    throw new ApiError(
+      400,
+      "Invalid shift timing configuration in Doctor Profile"
+    );
+  }
 
-  //  convert the end time into minutes
-  const endParts = shiftEndTime.split(":"); // ["21", "00"]
-  const endMinutes = parseInt(endParts[0]) * 60 + parseInt(endParts[1]);
+  let currentMinutes = timeToMinutes(finalStartTime);
+  const endMinutes = timeToMinutes(finalEndTime);
+  const slotsToInsert = [];
 
-  let slotsToInsert = [];
-
-  //  step 3: loop through the shift time to generate slots
   while (currentMinutes + slotDuration <= endMinutes) {
-    //  convert current minutes to "HH:mm" format (e.g., 1050 -> "17:30")
-    const startHour = String(Math.floor(currentMinutes / 60)).padStart(2, "0");
-    const startMin = String(currentMinutes % 60).padStart(2, "0");
-    const slotStartTime = `${startHour}:${startMin}`;
-
     const nextMinutes = currentMinutes + slotDuration;
-
-    //  convert next minutes to "HH:mm" format (e.g., 1110 -> "18:30")
-    const endHour = String(Math.floor(nextMinutes / 60)).padStart(2, "0");
-    const endMin = String(nextMinutes % 60).padStart(2, "0");
-    const slotEndTime = `${endHour}:${endMin}`;
 
     slotsToInsert.push({
       doctorId: doctorId,
       appointmentDate: date,
-      startTime: slotStartTime,
-      endTime: slotEndTime,
+      startTime: minutesToTime(currentMinutes),
+      endTime: minutesToTime(nextMinutes),
       status: "PENDING",
     });
 
     currentMinutes = nextMinutes;
   }
 
-  const generateSlots = await Appointment.insertMany(slotsToInsert);
+  const generatedSlots = await Appointment.insertMany(slotsToInsert);
 
-  if (!generateSlots || generateSlots.length === 0) {
-    throw new ApiError(500, "Failed to generate slots");
+  if (!generatedSlots || generatedSlots.length === 0) {
+    throw new ApiError(
+      500,
+      "Database transaction failed while generating slots"
+    );
   }
 
   return res
     .status(201)
-    .json(new ApiResponse(201, generateSlots, "Slots generated successfully"));
+    .json(
+      new ApiResponse(
+        201,
+        { totalSlots: generatedSlots.length, slots: generatedSlots },
+        "Slots successfully engineered and deployed"
+      )
+    );
 });
 
 export const updateQueueStatus = asyncHandler(async (req, res) => {
