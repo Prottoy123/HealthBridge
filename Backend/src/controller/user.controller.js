@@ -199,12 +199,22 @@ export const changeCurrentPassword = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid old password");
   }
 
+if (user.status === "PENDING" && ["STAFF", "ADMIN"].includes(user.role)) {
+  user.status = "ACTIVE";
+}
+
   user.password = newPassword;
   await user.save({ validateBeforeSave: false });
 
   return res
     .status(200)
-    .json(new ApiResponse(200, {}, "Password changed successfully"));
+    .json(
+      new ApiResponse(
+        200,
+        { status: user.status },
+        "Password changed successfully"
+      )
+    );
 });
 
 //update Account Details 

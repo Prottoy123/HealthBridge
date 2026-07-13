@@ -315,7 +315,7 @@ export const createStaff = asyncHandler(async (req, res) => {
     email,
     password: temporaryPassword,
     role: assignedRole,
-    status: "ACTIVE",
+    status: "PENDING",
   });
 
   const createdUser = await User.findById(user._id).select(
