@@ -4,7 +4,7 @@ const appointmentSchema = new Schema(
     patientId: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: false,
     }, 
     doctorId: {
       type: Schema.Types.ObjectId,
