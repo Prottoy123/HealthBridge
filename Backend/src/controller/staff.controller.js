@@ -5,6 +5,7 @@ import { ApiError } from "../utils/apiError.js";
 import { Appointment } from "../models/appoinment.models.js";
 import { DoctorProfile } from "../models/doctorProfile.models.js";
 import { FollowUp } from "../models/followUp.models.js";
+import mongoose from "mongoose";
 
 const timeToMinutes = (timeString) => {
   if (!timeString) return null;
@@ -25,7 +26,8 @@ export const generateSlots = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Doctor ID and date are mandatory fields");
   }
 
-  const doctorData = await DoctorProfile.findOne({ userId: doctorId });
+  const doctorData = await DoctorProfile.findById(doctorId);
+
   if (!doctorData) {
     throw new ApiError(404, "Doctor profile not found in the system");
   }
@@ -37,7 +39,7 @@ export const generateSlots = asyncHandler(async (req, res) => {
 
   if (appointmentCheck.length > 0) {
     throw new ApiError(
-      409, 
+      409,
       "Slots have already been generated for this doctor on the specified date"
     );
   }
@@ -153,7 +155,7 @@ export const getDoctorAppointments = asyncHandler(async (req, res) => {
     },
     {
       $lookup: {
-        from: "users", 
+        from: "users",
         localField: "patientId",
         foreignField: "_id",
         as: "patientInfo",
@@ -163,25 +165,23 @@ export const getDoctorAppointments = asyncHandler(async (req, res) => {
     {
       $unwind: {
         path: "$patientInfo",
-        preserveNullAndEmptyArrays: true, 
+        preserveNullAndEmptyArrays: true,
       },
     },
     {
-      
       $sort: {
         startTime: 1,
       },
     },
     {
       $project: {
-        _id: 1, 
+        _id: 1,
         appointmentDate: 1,
         startTime: 1,
         endTime: 1,
         status: 1,
         "patientInfo._id": 1,
-        "patientInfo.fullName": 1, 
-        aiSymptomSummary: 0, 
+        "patientInfo.fullName": 1,
       },
     },
   ]);
@@ -191,70 +191,89 @@ export const getDoctorAppointments = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, queue, "Doctor queue fetched successfully"));
 });
 
-export const uploadPatientReport = asyncHandler(async (req, res) => {
+export const getAllPatientsForStaff = asyncHandler(async (req, res) => {
 
-  const { patientId } = req.body
+  const patients = await User.find({ role: "PATIENT" })
+    .select("_id fullName phone email")
+    .sort({ createdAt: -1 }); // Newest patients first
 
-  if (!patientId) {
-    throw new ApiError(401,"Patient Id Required")
-  }
-
-   if (!req.files || req.files.length === 0) {
-     throw new ApiError(400, "No medical records uploaded");
-   }
-
-   const filesPath = req.files.map((file)=>file.path)
-
-   const uploadPromises = filesPath.map((path)=>uploadOnCloudinary(path))
-
-   const resolvePromises = await Promise.all(uploadPromises)
-
-     const successfulUploads = resolvePromises.filter((file) => file !== null);
-
-     if (successfulUploads.length === 0) {
-       throw new ApiError(500, "Failed to upload files to cloud server");
-     }
-
-      const medicalRecordsData = successfulUploads.map((file) => {
-        return {
-          patientId: patientId,
-          fileUrl: file.url,
-          recordType: 'LAB_REPORT',
-          uploadedBy: req.user._id,
-          uploaderRole: req.user.role,
-        };
-      });
-
-try {
-  const createRecords = await MedicalRecord.insertMany(medicalRecordsData);
-
-  if (!createRecords || createRecords.length === 0) {
-    throw new ApiError(500, "Failed to save medical records in database");
+  if (!patients) {
+    throw new ApiError(404, "No patients found in the database");
   }
 
   return res
-    .status(201)
+    .status(200)
     .json(
       new ApiResponse(
-        201,
-        createRecords,
-        "Medical records uploaded successfully"
+        200, 
+        patients, 
+        "Patient list fetched successfully for dropdown"
       )
     );
-} catch (error) {
-  if (successfulUploads && successfulUploads.length > 0) {
-    const deletePromises = successfulUploads.map((file) =>
-      deleteFromCloudinary(file.public_id)
-    );
+});
 
-    await Promise.all(deletePromises);
+export const uploadPatientReport = asyncHandler(async (req, res) => {
+  const { patientId } = req.body;
+
+  if (!patientId) {
+    throw new ApiError(401, "Patient Id Required");
   }
 
-  throw new ApiError(
-    500,
-    error?.message ||
-      "Database transaction failed. Orphaned files cleaned up successfully."
-  );
-}
+  if (!req.files || req.files.length === 0) {
+    throw new ApiError(400, "No medical records uploaded");
+  }
 
-})
+  const filesPath = req.files.map((file) => file.path);
+
+  const uploadPromises = filesPath.map((path) => uploadOnCloudinary(path));
+
+  const resolvePromises = await Promise.all(uploadPromises);
+
+  const successfulUploads = resolvePromises.filter((file) => file !== null);
+
+  if (successfulUploads.length === 0) {
+    throw new ApiError(500, "Failed to upload files to cloud server");
+  }
+
+  const medicalRecordsData = successfulUploads.map((file) => {
+    return {
+      patientId: patientId,
+      fileUrl: file.url,
+      recordType: "LAB_REPORT",
+      uploadedBy: req.user._id,
+      uploaderRole: req.user.role,
+    };
+  });
+
+  try {
+    const createRecords = await MedicalRecord.insertMany(medicalRecordsData);
+
+    if (!createRecords || createRecords.length === 0) {
+      throw new ApiError(500, "Failed to save medical records in database");
+    }
+
+    return res
+      .status(201)
+      .json(
+        new ApiResponse(
+          201,
+          createRecords,
+          "Medical records uploaded successfully"
+        )
+      );
+  } catch (error) {
+    if (successfulUploads && successfulUploads.length > 0) {
+      const deletePromises = successfulUploads.map((file) =>
+        deleteFromCloudinary(file.public_id)
+      );
+
+      await Promise.all(deletePromises);
+    }
+
+    throw new ApiError(
+      500,
+      error?.message ||
+        "Database transaction failed. Orphaned files cleaned up successfully."
+    );
+  }
+});
