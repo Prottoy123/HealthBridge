@@ -5,6 +5,9 @@ import { ApiError } from "../utils/apiError.js";
 import { Appointment } from "../models/appoinment.models.js";
 import { DoctorProfile } from "../models/doctorProfile.models.js";
 import { FollowUp } from "../models/followUp.models.js";
+import { User } from "../models/User.models.js";
+import { MedicalRecord } from "../models/medicalRecord.models.js";
+import { deleteFromCloudinary } from "../utils/cloudinary.js";
 import mongoose from "mongoose";
 
 const timeToMinutes = (timeString) => {
@@ -191,25 +194,23 @@ export const getDoctorAppointments = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, queue, "Doctor queue fetched successfully"));
 });
 
-export const getAllPatientsForStaff = asyncHandler(async (req, res) => {
 
-  const patients = await User.find({ role: "PATIENT" })
-    .select("_id fullName phone email")
-    .sort({ createdAt: -1 }); // Newest patients first
+export const searchPatientsForStaff = asyncHandler(async (req, res) => {
+  const { query } = req.query; //
 
-  if (!patients) {
-    throw new ApiError(404, "No patients found in the database");
-  }
+  if (!query) return res.status(200).json(new ApiResponse(200, [], "Empty query"));
 
-  return res
-    .status(200)
-    .json(
-      new ApiResponse(
-        200, 
-        patients, 
-        "Patient list fetched successfully for dropdown"
-      )
-    );
+  const patients = await User.find({
+    role: "PATIENT",
+    $or: [
+      { fullName: { $regex: query, $options: "i" } },
+      { email: { $regex: query, $options: "i" } }
+    ]
+  })
+  .select("_id fullName email phone")
+  .limit(10); 
+
+  return res.status(200).json(new ApiResponse(200, patients, "Search results"));
 });
 
 export const uploadPatientReport = asyncHandler(async (req, res) => {

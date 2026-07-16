@@ -6,7 +6,7 @@ const medicalRecordSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true, // ডেটাবেস কোয়েরি ফাস্ট করার জন্য ইন্ডেক্সিং
+      index: true, 
     },
     fileUrl: {
       type: String, // Cloudinary URL
