@@ -6,6 +6,7 @@ import {
   getDailySchedule,
   getDoctorProfile,
   updateDoctorProfile,
+  getAppointmentDetails,
 } from "../controller/doctor.controller.js";
 
 const router = Router();
@@ -18,6 +19,9 @@ router.route("/daily-schedule").get(restrictTo("DOCTOR"), getDailySchedule);
 router
   .route("/complete-visit/:appointmentId")
   .patch(restrictTo("DOCTOR"), completeVisit);
+router
+  .route("/appointment-details/:appointmentId")
+  .get(restrictTo("DOCTOR"), getAppointmentDetails);
 
 router.route("/get-profile").get(restrictTo("DOCTOR"), getDoctorProfile);
 
