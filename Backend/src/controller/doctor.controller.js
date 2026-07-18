@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { User } from "../models/User.models.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
@@ -6,14 +7,13 @@ import { ApiError } from "../utils/apiError.js";
 import { Appointment } from "../models/appoinment.models.js";
 import { DoctorProfile } from "../models/doctorProfile.models.js";
 import { FollowUp } from "../models/followUp.models.js";
-import {getRedis} from "../config/redis.config.js";
-
+import { getRedis } from "../config/redis.config.js";
 export const getDoctorProfile = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
   const profile = await DoctorProfile.findOne({ userId }).populate(
     "userId",
-    "fullName email profileImage status role" 
+    "fullName email profileImage status role"
   );
 
   if (!profile) {
@@ -91,7 +91,7 @@ export const updateDoctorProfile = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, updatedProfile,"Profile updated successfully"));
+    .json(new ApiResponse(200, updatedProfile, "Profile updated successfully"));
 });
 
 export const getDailySchedule = asyncHandler(async (req, res) => {
@@ -199,7 +199,7 @@ export const getDailySchedule = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(
-      new ApiResponse(200, "Daily schedule fetched successfully", dailySchedule)
+      new ApiResponse(200, dailySchedule, "Daily schedule fetched successfully")
     );
 });
 
@@ -313,7 +313,6 @@ export const getAppointmentDetails = asyncHandler(async (req, res) => {
 });
 
 export const completeVisit = asyncHandler(async (req, res) => {
-
   const { appointmentId } = req.params;
   const { followUpDays } = req.body;
 
@@ -328,23 +327,23 @@ export const completeVisit = asyncHandler(async (req, res) => {
   const redisTTl = followUpDays * 24 * 60 * 60; // Redis TTL in seconds
 
   const session = await mongoose.startSession();
- 
+
   session.startTransaction();
 
   try {
     const appointmentStatus = await Appointment.findOneAndUpdate(
       {
         _id: appointmentId,
-        doctorId: req.user._id, 
+        doctorId: req.user._id,
       },
       {
         $set: {
-          status: "COMPLETED", 
+          status: "COMPLETED",
         },
       },
       {
         new: true,
-        session, 
+        session,
       }
     );
 
@@ -381,7 +380,12 @@ export const completeVisit = asyncHandler(async (req, res) => {
     try {
       const redisClient = getRedis();
       const redisKey = `chat_unlock:${appointmentId}`;
-      const redisExecution = await redisClient.set(redisKey, "locked", "EX", redisTTl);
+      const redisExecution = await redisClient.set(
+        redisKey,
+        "locked",
+        "EX",
+        redisTTl
+      );
     } catch (err) {
       console.error("Failed to set Redis key for follow-up lock:", err);
     }
@@ -391,14 +395,14 @@ export const completeVisit = asyncHandler(async (req, res) => {
         200,
         {
           appointment: appointmentStatus,
-          followUp: createFollowUp[0], 
+          followUp: createFollowUp[0],
         },
         "Visit completed and follow-up scheduled successfully"
       )
     );
   } catch (error) {
     await session.abortTransaction();
-    throw error; 
+    throw error;
   } finally {
     await session.endSession();
   }
