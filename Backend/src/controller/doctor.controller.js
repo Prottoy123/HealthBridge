@@ -95,18 +95,25 @@ export const updateDoctorProfile = asyncHandler(async (req, res) => {
 });
 
 export const getDailySchedule = asyncHandler(async (req, res) => {
-  // 1. Set time boundaries for "today" based on server time
-  const startOfDay = new Date();
+  const doctorProfile = await DoctorProfile.findOne({ userId: req.user._id });
+
+  if (!doctorProfile) {
+    throw new ApiError(404, "Doctor profile not found");
+  }
+
+  const now = new Date();
+
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   startOfDay.setHours(0, 0, 0, 0);
 
-  const endOfDay = new Date();
+  const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   endOfDay.setHours(23, 59, 59, 999);
 
   const pipeline = [
-    // 2. Filter today's active appointments for the logged-in doctor
+    // 2. Filter today's active appointments
     {
       $match: {
-        doctorId: new mongoose.Types.ObjectId(req.user._id),
+        doctorId: doctorProfile._id, 
         appointmentDate: {
           $gte: startOfDay,
           $lte: endOfDay,
@@ -115,7 +122,7 @@ export const getDailySchedule = asyncHandler(async (req, res) => {
       },
     },
 
-    // 3. Get basic user info (name, email) from "users" collection
+    // 3. Get basic user info (with strict drop prevention)
     {
       $lookup: {
         from: "users",
@@ -125,10 +132,14 @@ export const getDailySchedule = asyncHandler(async (req, res) => {
       },
     },
     {
-      $unwind: "$patientBasicInfo",
+      // THE FIX: If patientId is missing or invalid, do NOT drop the appointment
+      $unwind: {
+        path: "$patientBasicInfo",
+        preserveNullAndEmptyArrays: true,
+      },
     },
 
-    // 4. Get only necessary profile info (DOB, emergencyContact) for lightweight view
+    // 4. Get lightweight medical profile
     {
       $lookup: {
         from: "patientprofiles",
@@ -163,12 +174,12 @@ export const getDailySchedule = asyncHandler(async (req, res) => {
       },
     },
 
-    // 6. Maintain Queue Order (Morning to Night)
+    // 6. Maintain Queue Order
     {
       $sort: { startTime: 1 },
     },
 
-    // 7. Strict Lightweight Projection: Removed heavy medical history and AI summary
+    // 7. Strict Lightweight Projection
     {
       $project: {
         _id: 1,
@@ -176,12 +187,18 @@ export const getDailySchedule = asyncHandler(async (req, res) => {
         startTime: 1,
         endTime: 1,
         status: 1,
-
-        // Only keeping identification and basic contact options
+        // Added patientId to projection for debugging
+        patientId: 1,
         patientDetails: {
-          name: "$patientBasicInfo.fullName",
+          // If basic info is missing, fallback to "Unknown"
+          name: {
+            $ifNull: [
+              "$patientBasicInfo.fullName",
+              "Unknown Patient (ID Missing)",
+            ],
+          },
           age: "$calculatedAge",
-          email: "$patientBasicInfo.email",
+          email: { $ifNull: ["$patientBasicInfo.email", "N/A"] },
           emergencyContact: {
             $ifNull: ["$patientMedicalData.emergencyContact", "N/A"],
           },
@@ -210,12 +227,18 @@ export const getAppointmentDetails = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Appointment ID is required");
   }
 
+  const doctorProfile = await DoctorProfile.findOne({ userId: req.user._id });
+
+  if (!doctorProfile) {
+    throw new ApiError(404, "Doctor profile not found");
+  }
+
   const pipeline = [
     // 1. Target the specific appointment and secure it to the logged-in doctor
     {
       $match: {
         _id: new mongoose.Types.ObjectId(appointmentId),
-        doctorId: new mongoose.Types.ObjectId(req.user._id),
+        doctorId: doctorProfile._id,
       },
     },
 
@@ -324,6 +347,12 @@ export const completeVisit = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Follow-up days are required");
   }
 
+  const doctorProfile = await DoctorProfile.findOne({ userId: req.user._id });
+
+  if (!doctorProfile) {
+    throw new ApiError(404, "Doctor profile not found");
+  }
+
   const redisTTl = followUpDays * 24 * 60 * 60; // Redis TTL in seconds
 
   const session = await mongoose.startSession();
@@ -334,7 +363,7 @@ export const completeVisit = asyncHandler(async (req, res) => {
     const appointmentStatus = await Appointment.findOneAndUpdate(
       {
         _id: appointmentId,
-        doctorId: req.user._id,
+        doctorId: doctorProfile._id,
       },
       {
         $set: {
