@@ -8,20 +8,16 @@ function IdentityManager() {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
 
-  // ১. দ্য আইডেন্টিটি মেমরি (Local State)
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
 
-  // ২. দ্য সিকিউরিটি মেমরি (Local State)
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confPassword, setConfPassword] = useState("");
 
-  // লোডিং স্টেটস (নেটওয়ার্ক রিকোয়েস্ট ট্র্যাক করার জন্য)
   const [isUpdatingAccount, setIsUpdatingAccount] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-  // দ্য ডেটা হাইড্রেশন: কম্পোনেন্ট মাউন্ট হলে বা গ্লোবাল ইউজার চেঞ্জ হলে ফর্মে ডেটা বসবে
   useEffect(() => {
     if (user) {
       setFullName(user.fullName || "");
@@ -29,9 +25,7 @@ function IdentityManager() {
     }
   }, [user]);
 
-  // ==========================================
-  // দ্য আইডেন্টিটি আপডেটার ইঞ্জিন
-  // ==========================================
+
   const handleAccountUpdate = async (e) => {
     e.preventDefault();
 
@@ -40,7 +34,6 @@ function IdentityManager() {
       return;
     }
 
-    // অপ্টিমাইজেশন: ডেটা চেঞ্জ না হলে অযথাই API কল ব্লক করা
     if (fullName === user.fullName && phone === (user.phone || "")) {
       toast.error("No changes detected.");
       return;
@@ -51,7 +44,6 @@ function IdentityManager() {
       const payload = { fullName, phone };
       const response = await api.patch("/user/update-account", payload);
 
-      // ব্যাকএন্ড থেকে আসা আপডেটেড ডেটা রিডাক্সে পুশ করা
       dispatch(updateUserIdentity(response.data.data));
       toast.success("Account identity successfully updated.");
     } catch (error) {
@@ -90,7 +82,6 @@ function IdentityManager() {
 
       toast.success("Security credentials updated successfully.");
 
-      // সাকসেস হলে সিকিউরিটি ফর্ম ক্লিনআপ
       setOldPassword("");
       setNewPassword("");
       setConfPassword("");
