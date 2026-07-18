@@ -108,29 +108,40 @@ export const updateQueueStatus = asyncHandler(async (req, res) => {
     );
   }
 
-  const checkAppointment = await Appointment.findOneAndUpdate(
-    { _id: appointmentId },
-    {
-      $set: { status: status },
-    },
-    { new: true }
-  );
+  const checkAppointment = await Appointment.findById(appointmentId);
 
   if (!checkAppointment) {
     throw new ApiError(404, "Appointment not found");
   }
 
+  // ৩. THE STRICT FIREWALL (Guard Clause)
+  if (
+    (status === "CHECKED-IN" || status === "IN-PROGRESS") &&
+    !checkAppointment.patientId
+  ) {
+    throw new ApiError(
+      400,
+      "Action Denied: Cannot check-in an empty slot. A patient must book this slot first."
+    );
+  }
+
+  checkAppointment.status = status;
+  const updatedAppointment = await checkAppointment.save({
+    validateBeforeSave: false,
+  });
+
+  // ৫. Socket.io Event Emission 
   const io = req.app.get("io");
-
   // need the same room name in frontend (staff_desk)
-  io.to("staff_desk").emit("queue_update", checkAppointment);
+  io.to("staff_desk").emit("queue_update", updatedAppointment);
 
+  // ৬. Final Response
   return res
     .status(200)
     .json(
       new ApiResponse(
         200,
-        checkAppointment,
+        updatedAppointment,
         "Queue status updated successfully"
       )
     );

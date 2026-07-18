@@ -4,25 +4,24 @@ const appointmentSchema = new Schema(
     patientId: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: false,
-    }, 
+    },
     doctorId: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-    }, 
+    },
     appointmentDate: {
       type: Date,
       required: true,
-    }, 
+    },
     startTime: {
       type: String,
       required: true,
-    }, 
+    },
     endTime: {
       type: String,
       required: true,
-    }, 
+    },
     status: {
       type: String,
       enum: [
@@ -34,10 +33,10 @@ const appointmentSchema = new Schema(
         "CANCELLED",
       ],
       default: "PENDING",
-    }, 
+    },
     aiSymptomSummary: {
       type: String,
-    }, 
+    },
   },
   { timestamps: true }
 );
