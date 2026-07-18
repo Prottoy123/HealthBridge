@@ -42,21 +42,6 @@ export const uploadPatientReport = createAsyncThunk(
   },
 );
 
-// // Fetching patient list for the dropdown
-// export const fetchPatientsForDropdown = createAsyncThunk(
-//   "staff/fetchPatientsForDropdown",
-//   async (_, { rejectWithValue }) => {
-//     try {
-//       const response = await api.get("/staff/get-patients");
-//       return response.data.data;
-//     } catch (error) {
-//       return rejectWithValue(
-//         error.response?.data?.message || "Failed to fetch patient list.",
-//       );
-//     }
-//   },
-// );
-
 // --- Initial State ---
 
 const initialState = {
@@ -110,21 +95,7 @@ const staffSlice = createSlice({
       .addCase(fetchTodayQueue.rejected, (state, action) => {
         state.queueStatus = "failed";
         state.error = action.payload;
-      })
-
-      // // Fetch Patients Lifecycle
-      // .addCase(fetchPatientsForDropdown.pending, (state) => {
-      //   state.isLoadingPatients = true;
-      //   state.error = null;
-      // })
-      // .addCase(fetchPatientsForDropdown.fulfilled, (state, action) => {
-      //   state.isLoadingPatients = false;
-      //   state.patientsList = action.payload;
-      // })
-      // .addCase(fetchPatientsForDropdown.rejected, (state, action) => {
-      //   state.isLoadingPatients = false;
-      //   state.error = action.payload;
-      // });
+      });
   },
 });
 
