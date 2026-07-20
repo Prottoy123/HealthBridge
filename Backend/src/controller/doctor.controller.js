@@ -436,3 +436,71 @@ export const completeVisit = asyncHandler(async (req, res) => {
     await session.endSession();
   }
 });
+
+export const getActiveFollowups = asyncHandler(async (req, res) => {
+  
+  const doctorProfile = await DoctorProfile.findOne({ userId: req.user._id });
+
+  if (!doctorProfile) {
+    throw new ApiError(404, "Doctor profile not found");
+  }
+
+  // 2. Heavy-duty Aggregation for Active Inboxes
+  const activeFollowUps = await FollowUp.aggregate([
+    {
+      // First, filter ONLY ACTIVE follow-ups (Massive performance boost)
+      $match: {
+        status: "ACTIVE",
+      },
+    },
+    {
+      // LOOKUP 1: Get the parent appointment details
+      $lookup: {
+        from: "appointments",
+        localField: "originalAppointmentId",
+        foreignField: "_id",
+        as: "appointmentDetails",
+      },
+    },
+    {
+      $unwind: "$appointmentDetails", // Flatten the array
+    },
+    {
+      $match: {
+        "appointmentDetails.doctorId": doctorProfile._id,
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "appointmentDetails.patientId",
+        foreignField: "_id",
+        as: "patientInfo",
+      },
+    },
+    {
+      $unwind: "$patientInfo",
+    },
+    {
+      $project: {
+        _id: 1,
+        originalAppointmentId: 1, 
+        expiresAt: 1,
+        "patientInfo._id": 1,
+        "patientInfo.fullName": 1,
+        "patientInfo.profileImage": 1,
+        "appointmentDetails.appointmentDate": 1,
+      },
+    },
+  ]);
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        activeFollowUps,
+        "Active follow-ups fetched successfully"
+      )
+    );
+});
