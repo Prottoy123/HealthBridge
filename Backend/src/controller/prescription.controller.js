@@ -97,18 +97,24 @@ export const getMyPrescriptions = asyncHandler(async(req,res)=>{
       );
 
 })
-export const getPatientPrescriptions = asyncHandler(async(req,res)=>{
- const {patientId} = req.params;
- const {page=1,limit=10} = req.query;
+export const getPatientPrescriptions = asyncHandler(async (req, res) => {
+  const { patientId } = req.params;
+  const { page = 1, limit = 10 } = req.query;
 
-    const pageNumber = parseInt(page);
-    const limitNumber = parseInt(limit);
+  const pageNumber = parseInt(page);
+  const limitNumber = parseInt(limit);
 
-    const thresholdDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const doctorProfile = await DoctorProfile.findOne({ userId: req.user._id });
+
+  if (!doctorProfile) {
+    throw new ApiError(404, "Doctor profile not found");
+  }
+
+  const thresholdDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
   const verifyUser = await Appointment.findOne({
     patientId: patientId,
-    doctorId: req.user._id,
+    doctorId: doctorProfile._id, 
     status: {
       $in: ["COMPLETED", "CONFIRMED"],
     },
@@ -116,7 +122,10 @@ export const getPatientPrescriptions = asyncHandler(async(req,res)=>{
   });
 
   if (!verifyUser) {
-    throw new ApiError(403,"You dont have authority to view this")
+    throw new ApiError(
+      403,
+      "Forbidden: You don't have authority to view these prescriptions"
+    );
   }
 
   const pipeline = [
@@ -132,34 +141,31 @@ export const getPatientPrescriptions = asyncHandler(async(req,res)=>{
     },
   ];
 
-      const aggregateQuery = Prescription.aggregate(pipeline);
-      const prescriptions = await Prescription.aggregatePaginate(aggregateQuery, {
-        page: pageNumber,
-        limit: limitNumber,
-      });
+  const aggregateQuery = Prescription.aggregate(pipeline);
+  const prescriptions = await Prescription.aggregatePaginate(aggregateQuery, {
+    page: pageNumber,
+    limit: limitNumber,
+  });
 
-      if (!prescriptions) {
-        throw new ApiError(500, "Failed to fetch prescriptions");
-      }
+  if (!prescriptions) {
+    throw new ApiError(500, "Failed to fetch prescriptions");
+  }
 
-      const payload = {
-        records: prescriptions.docs,
-        pagination: {
-          totalDocs: prescriptions.totalDocs,
-          totalPages: prescriptions.totalPages,
-          currentPage: prescriptions.page,
-          hasNextPage: prescriptions.hasNextPage,
-          hasPrevPage: prescriptions.hasPrevPage,
-        },
-      };
+  const payload = {
+    records: prescriptions.docs,
+    pagination: {
+      totalDocs: prescriptions.totalDocs,
+      totalPages: prescriptions.totalPages,
+      currentPage: prescriptions.page,
+      hasNextPage: prescriptions.hasNextPage,
+      hasPrevPage: prescriptions.hasPrevPage,
+    },
+  };
 
-      return res
-        .status(200)
-        .json(
-          new ApiResponse(200, payload, "Prescriptions fetched successfully")
-        ); 
-  
-})
+  return res
+    .status(200)
+    .json(new ApiResponse(200, payload, "Prescriptions fetched successfully"));
+});
 
 export const decodePrescription = asyncHandler(async (req, res) => {
   if (!req.file) {
