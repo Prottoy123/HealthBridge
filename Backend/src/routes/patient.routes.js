@@ -12,6 +12,7 @@ import {
   getDoctorList,
   analyzeSymptom,
   getPatientProfile,
+  getAppointmentHistory,
   
 } from "../controller/patient.controller.js";
 
@@ -62,5 +63,9 @@ router
     rateLimiter("symptom_limit", 4, 3600),
     analyzeSymptom
   );
+
+  router
+    .route("/appointment-history")
+    .get(verifyJWT, restrictTo(["PATIENT"]), getAppointmentHistory);
 
 export default router;

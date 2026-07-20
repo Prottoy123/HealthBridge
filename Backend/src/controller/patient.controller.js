@@ -375,3 +375,80 @@ export const analyzeSymptom = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, aiResult, "Symptoms analyzed successfully"));
 });
+
+export const getAppointmentHistory = asyncHandler(async (req, res) => {
+  const appointmentHistory = await Appointment.aggregate([
+    {
+      // Match all appointments for the logged-in patient
+      $match: {
+        patientId: new mongoose.Types.ObjectId(req.user._id),
+      },
+    },
+    {
+      // Sort by newest first
+      $sort: { appointmentDate: -1 },
+    },
+    {
+      // LOOKUP 1: Fetch the FollowUp data for each appointment
+      $lookup: {
+        from: "followups", // Ensure this matches your exact collection name in MongoDB
+        localField: "_id",
+        foreignField: "originalAppointmentId",
+        as: "followUpData",
+      },
+    },
+    {
+      // LOOKUP 2: Fetch Doctor's User details (Name, Image)
+      $lookup: {
+        from: "users",
+        localField: "doctorId",
+        foreignField: "_id",
+        as: "doctorInfo",
+      },
+    },
+    {
+      $addFields: {
+        // Since lookup returns an array, extract the first element
+        followUp: { $arrayElemAt: ["$followUpData", 0] },
+        doctor: {
+          $let: {
+            vars: { doc: { $arrayElemAt: ["$doctorInfo", 0] } },
+            in: {
+              _id: "$$doc._id",
+              fullName: "$$doc.fullName",
+              profileImage: "$$doc.profileImage",
+            },
+          },
+        },
+      },
+    },
+    {
+      // Project only necessary fields (Zero Over-fetching)
+      $project: {
+        appointmentDate: 1,
+        startTime: 1,
+        status: 1,
+        doctor: 1,
+        "followUp._id": 1,
+        "followUp.status": 1, // To check if "ACTIVE" or "CLOSED"
+        "followUp.expiresAt": 1, // To show countdown timer in UI
+      },
+    },
+  ]);
+
+  if (!appointmentHistory.length) {
+    return res
+      .status(200)
+      .json(new ApiResponse(200, [], "No appointment history found"));
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        appointmentHistory,
+        "Appointment history fetched successfully"
+      )
+    );
+});
