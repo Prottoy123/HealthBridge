@@ -13,6 +13,7 @@ import {
   analyzeSymptom,
   getPatientProfile,
   getAppointmentHistory,
+  getDoctorDetailsForPatient,
   
 } from "../controller/patient.controller.js";
 
@@ -26,6 +27,10 @@ router
 router
   .route("/slots/:doctorId")
   .get(verifyJWT, restrictTo(["PATIENT", "STAFF"]), getAvailableSlots);
+
+router
+  .route("/doctor-details/:doctorId")
+  .get(verifyJWT, restrictTo(["PATIENT"]), getDoctorDetailsForPatient);
 
 // 2. Profile & Medical Records Routes
 router

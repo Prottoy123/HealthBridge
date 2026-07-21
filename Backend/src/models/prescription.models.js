@@ -1,4 +1,5 @@
 import mongoose, { Schema } from "mongoose";
+import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const prescriptionSchema = new Schema(
   {
@@ -43,6 +44,9 @@ const prescriptionSchema = new Schema(
     timestamps: true,
   }
 );
+
+prescriptionSchema.plugin(aggregatePaginate);
+
 
 prescriptionSchema.index({ patientId: 1, appointmentId: 1 });
 
