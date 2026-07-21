@@ -8,6 +8,7 @@ import { ApiError } from "../utils/apiError.js";
 import { Appointment } from "../models/appoinment.models.js";
 import { getRedis } from "../config/redis.config.js";
 import { analyzeSymptomService } from "../services/analyzeSymptomService.js";
+import mongoose from "mongoose";
 
 export const getPatientProfile = asyncHandler(async (req, res) => {
   const userId = req.user._id;
@@ -364,6 +365,30 @@ export const getDoctorList = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(new ApiResponse(200, payload, "Doctors list fetched successfully"));
+});
+
+export const getDoctorDetailsForPatient = asyncHandler(async (req, res) => {
+  const { doctorId } = req.params;
+
+  if (!doctorId) {
+    throw new ApiError(400, "Doctor ID is required");
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(doctorId)) {
+    throw new ApiError(400, "Invalid Doctor ID format");
+  }
+
+  const profile = await DoctorProfile.findOne({ userId: doctorId })
+    .populate("userId", "fullName profileImage")
+    .select("-slotDuration -roomNumber -createdAt -updatedAt -__v");
+
+  if (!profile) {
+    throw new ApiError(404, "Doctor profile not found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, profile, "Doctor details fetched successfully"));
 });
 
 export const analyzeSymptom = asyncHandler(async (req, res) => {
