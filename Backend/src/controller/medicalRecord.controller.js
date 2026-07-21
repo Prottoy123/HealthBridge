@@ -6,6 +6,7 @@ import { asyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
 import { Appointment } from "../models/appoinment.models.js";
 import { MedicalRecord } from "../models/medicalRecord.models.js";
+import { DoctorProfile } from "../models/doctorProfile.models.js";
 import mongoose from "mongoose";
 
 export const getPatientOwnRecords = asyncHandler(async (req, res) => {
