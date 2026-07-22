@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   updatePatientProfile,
   fetchPatientProfile,
-} from "./Slices/patientSlice.js";
+} from "../Slices/patientSlice.js";
 import toast from "react-hot-toast";
 
 function PatientProfileSettings() {

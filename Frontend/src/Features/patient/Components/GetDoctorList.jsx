@@ -1,9 +1,9 @@
 import React, { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchDoctorList, clearDoctorsList } from "./slices/doctorListSlice";
-import FilterBar from "./components/FilterBar";
-import PaginationController from "../../components/PaginationController"
+import { fetchDoctorList, clearDoctorsList } from "../slices/doctorListSlice";
+import FilterBar from "./FilterBar";
+import PaginationController from "../../../components/PaginationController";
 import { useNavigate } from "react-router-dom";
 
 function GetDoctorList() {

@@ -3,13 +3,12 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 
-// Update: তোমার স্লাইসের সঠিক পাথ মিলিয়ে নিও
 import {
   fetchAvailableSlots,
   bookAppointment,
   selectSlot,
   clearAppointmentState,
-} from "./slices/appointmentSlice";
+} from "../slices/appointmentSlice";
 
 function BookAppointment() {
   const [searchParams] = useSearchParams();

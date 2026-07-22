@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 
-import { analyzeSymptoms, clearSymptomSummary } from "./Slices/AI-Slices";
+import { analyzeSymptoms, clearSymptomSummary } from "../Slices/AI-Slices";
 
 function AiSymptomBot() {
   const dispatch = useDispatch();

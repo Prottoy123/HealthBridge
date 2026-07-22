@@ -42,9 +42,9 @@ const Login = () => {
       } else if (user.role === "DOCTOR") {
         navigate("/doctor/queue");
       } else if (user.role === "STAFF") {
-        navigate("/staff/live-desk");
+        navigate("/staff/dashboard");
       } else if (user.role === "ADMIN") {
-        navigate("/admin/verifications");
+        navigate("/admin/dashboard");
       } else {
         navigate("/");
       }
@@ -68,8 +68,19 @@ const Login = () => {
           {/* Logo / Title */}
           <div className="flex items-center gap-3 mb-8">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-teal-500 to-cyan-400 text-slate-950 font-bold shadow-[0_0_20px_rgba(20,184,166,0.35)]">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2.5"
+                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                />
               </svg>
             </div>
             <span className="text-2xl font-extrabold tracking-tight text-white">
@@ -82,7 +93,8 @@ const Login = () => {
               Welcome back
             </h2>
             <p className="mt-2.5 text-sm text-slate-450 text-slate-400">
-              Sign in to manage patient profiles, appointment queues, and clinical configurations.
+              Sign in to manage patient profiles, appointment queues, and
+              clinical configurations.
             </p>
           </div>
 
@@ -146,11 +158,15 @@ const Login = () => {
       <div className="hidden lg:flex flex-col justify-between bg-[#041517] p-16 text-white border-l border-white/[0.04] relative overflow-hidden">
         {/* Subtle grid pattern overlay */}
         <div className="absolute inset-0 bg-[radial-gradient(#153e43_1.2px,transparent_1.2px)] [background-size:24px_24px] opacity-40"></div>
-        
+
         {/* Top brand header */}
         <div className="relative z-10 flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-widest text-teal-400 bg-teal-500/10 px-3 py-1.5 rounded-full border border-teal-500/20 shadow-[0_0_15px_rgba(20,184,166,0.1)]">HIPAA COMPLIANT SECURITY</span>
-          <span className="text-xs text-slate-400 uppercase tracking-widest">Active Stream</span>
+          <span className="text-xs font-semibold uppercase tracking-widest text-teal-400 bg-teal-500/10 px-3 py-1.5 rounded-full border border-teal-500/20 shadow-[0_0_15px_rgba(20,184,166,0.1)]">
+            HIPAA COMPLIANT SECURITY
+          </span>
+          <span className="text-xs text-slate-400 uppercase tracking-widest">
+            Active Stream
+          </span>
         </div>
 
         {/* Middle visual representation: Live Clinical telemetry visualizer */}
@@ -167,36 +183,93 @@ const Login = () => {
 
             {/* Simulated intake flow graph */}
             <div className="h-24 flex items-end justify-between gap-1.5 pt-2 border-b border-white/[0.05] pb-2">
-              <div className="w-full bg-gradient-to-t from-teal-950 to-teal-400 rounded-full transition-all duration-500" style={{ height: "35%" }}></div>
-              <div className="w-full bg-gradient-to-t from-teal-950 to-teal-400 rounded-full transition-all duration-500" style={{ height: "55%" }}></div>
-              <div className="w-full bg-gradient-to-t from-teal-950 to-teal-400 rounded-full transition-all duration-500" style={{ height: "45%" }}></div>
-              <div className="w-full bg-gradient-to-t from-teal-950 to-teal-400 rounded-full transition-all duration-500" style={{ height: "75%" }}></div>
-              <div className="w-full bg-gradient-to-t from-teal-950 to-teal-400 rounded-full transition-all duration-500" style={{ height: "90%" }}></div>
-              <div className="w-full bg-gradient-to-t from-teal-950 to-teal-400 rounded-full transition-all duration-500" style={{ height: "60%" }}></div>
-              <div className="w-full bg-gradient-to-t from-teal-950 to-teal-400 rounded-full transition-all duration-500" style={{ height: "50%" }}></div>
-              <div className="w-full bg-gradient-to-t from-teal-950 to-teal-400 rounded-full transition-all duration-500" style={{ height: "80%" }}></div>
-              <div className="w-full bg-gradient-to-t from-teal-950 to-cyan-400 rounded-full transition-all duration-500" style={{ height: "100%" }}></div>
-              <div className="w-full bg-gradient-to-t from-teal-950 to-teal-400 rounded-full transition-all duration-500" style={{ height: "70%" }}></div>
-              <div className="w-full bg-gradient-to-t from-teal-950 to-teal-400 rounded-full transition-all duration-500" style={{ height: "50%" }}></div>
-              <div className="w-full bg-gradient-to-t from-teal-950 to-teal-400 rounded-full transition-all duration-500" style={{ height: "65%" }}></div>
-              <div className="w-full bg-gradient-to-t from-teal-950 to-teal-400 rounded-full transition-all duration-500" style={{ height: "85%" }}></div>
-              <div className="w-full bg-gradient-to-t from-teal-950 to-teal-400 rounded-full transition-all duration-500" style={{ height: "45%" }}></div>
-              <div className="w-full bg-gradient-to-t from-teal-950 to-teal-400 rounded-full transition-all duration-500" style={{ height: "35%" }}></div>
+              <div
+                className="w-full bg-gradient-to-t from-teal-950 to-teal-400 rounded-full transition-all duration-500"
+                style={{ height: "35%" }}
+              ></div>
+              <div
+                className="w-full bg-gradient-to-t from-teal-950 to-teal-400 rounded-full transition-all duration-500"
+                style={{ height: "55%" }}
+              ></div>
+              <div
+                className="w-full bg-gradient-to-t from-teal-950 to-teal-400 rounded-full transition-all duration-500"
+                style={{ height: "45%" }}
+              ></div>
+              <div
+                className="w-full bg-gradient-to-t from-teal-950 to-teal-400 rounded-full transition-all duration-500"
+                style={{ height: "75%" }}
+              ></div>
+              <div
+                className="w-full bg-gradient-to-t from-teal-950 to-teal-400 rounded-full transition-all duration-500"
+                style={{ height: "90%" }}
+              ></div>
+              <div
+                className="w-full bg-gradient-to-t from-teal-950 to-teal-400 rounded-full transition-all duration-500"
+                style={{ height: "60%" }}
+              ></div>
+              <div
+                className="w-full bg-gradient-to-t from-teal-950 to-teal-400 rounded-full transition-all duration-500"
+                style={{ height: "50%" }}
+              ></div>
+              <div
+                className="w-full bg-gradient-to-t from-teal-950 to-teal-400 rounded-full transition-all duration-500"
+                style={{ height: "80%" }}
+              ></div>
+              <div
+                className="w-full bg-gradient-to-t from-teal-950 to-cyan-400 rounded-full transition-all duration-500"
+                style={{ height: "100%" }}
+              ></div>
+              <div
+                className="w-full bg-gradient-to-t from-teal-950 to-teal-400 rounded-full transition-all duration-500"
+                style={{ height: "70%" }}
+              ></div>
+              <div
+                className="w-full bg-gradient-to-t from-teal-950 to-teal-400 rounded-full transition-all duration-500"
+                style={{ height: "50%" }}
+              ></div>
+              <div
+                className="w-full bg-gradient-to-t from-teal-950 to-teal-400 rounded-full transition-all duration-500"
+                style={{ height: "65%" }}
+              ></div>
+              <div
+                className="w-full bg-gradient-to-t from-teal-950 to-teal-400 rounded-full transition-all duration-500"
+                style={{ height: "85%" }}
+              ></div>
+              <div
+                className="w-full bg-gradient-to-t from-teal-950 to-teal-400 rounded-full transition-all duration-500"
+                style={{ height: "45%" }}
+              ></div>
+              <div
+                className="w-full bg-gradient-to-t from-teal-950 to-teal-400 rounded-full transition-all duration-500"
+                style={{ height: "35%" }}
+              ></div>
             </div>
 
             {/* Counters */}
             <div className="grid grid-cols-3 gap-4">
               <div className="bg-white/5 rounded-2xl p-4 border border-white/5 text-center">
-                <span className="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">Avg Wait</span>
-                <span className="text-xl font-black text-teal-400 mt-1 block">18 min</span>
+                <span className="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">
+                  Avg Wait
+                </span>
+                <span className="text-xl font-black text-teal-400 mt-1 block">
+                  18 min
+                </span>
               </div>
               <div className="bg-white/5 rounded-2xl p-4 border border-white/5 text-center">
-                <span className="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">Intake</span>
-                <span className="text-xl font-black text-teal-400 mt-1 block">142/hr</span>
+                <span className="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">
+                  Intake
+                </span>
+                <span className="text-xl font-black text-teal-400 mt-1 block">
+                  142/hr
+                </span>
               </div>
               <div className="bg-white/5 rounded-2xl p-4 border border-white/5 text-center">
-                <span className="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">Load</span>
-                <span className="text-xl font-black text-emerald-400 mt-1 block">Normal</span>
+                <span className="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">
+                  Load
+                </span>
+                <span className="text-xl font-black text-emerald-400 mt-1 block">
+                  Normal
+                </span>
               </div>
             </div>
           </div>
@@ -206,17 +279,30 @@ const Login = () => {
               Smart Healthcare Operations
             </h3>
             <p className="mt-4 text-slate-300 leading-relaxed text-sm">
-              An all-in-one system designed for smart patient management, secure communication channels, and real-time medical staff scheduling.
+              An all-in-one system designed for smart patient management, secure
+              communication channels, and real-time medical staff scheduling.
             </p>
           </div>
         </div>
 
         {/* Bottom quotes / footer */}
         <div className="relative z-10 flex items-center gap-4 text-xs text-slate-400 border-t border-white/10 pt-8">
-          <svg className="w-5 h-5 text-teal-400 shrink-0" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-2 0c0 .993-.241 1.929-.668 2.754l-1.524-1.525a3.997 3.997 0 00.078-2.183l1.555-1.555A7.962 7.962 0 0116 10zM7.246 12.754l-1.525 1.524A7.962 7.962 0 014 10c0-.993.241-1.929.668-2.754l1.524 1.525a3.997 3.997 0 00-.078 2.183l-1.555 1.555A7.962 7.962 0 014 10z" clipRule="evenodd" />
+          <svg
+            className="w-5 h-5 text-teal-400 shrink-0"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              fillRule="evenodd"
+              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-2 0c0 .993-.241 1.929-.668 2.754l-1.524-1.525a3.997 3.997 0 00.078-2.183l1.555-1.555A7.962 7.962 0 0116 10zM7.246 12.754l-1.525 1.524A7.962 7.962 0 014 10c0-.993.241-1.929.668-2.754l1.524 1.525a3.997 3.997 0 00-.078 2.183l-1.555 1.555A7.962 7.962 0 014 10z"
+              clipRule="evenodd"
+            />
           </svg>
-          <span className="italic leading-normal text-slate-350 text-slate-300">"This platform has transformed how our clinic coordinates schedules and handles patient walk-ins." — Dr. Sarah Rahman, MD</span>
+          <span className="italic leading-normal text-slate-350 text-slate-300">
+            "This platform has transformed how our clinic coordinates schedules
+            and handles patient walk-ins." — Dr. Sarah Rahman, MD
+          </span>
         </div>
       </div>
     </div>
