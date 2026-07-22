@@ -6,7 +6,6 @@ import {
   clearNewlyCreatedCredentials,
 } from "../slices/staffProvisioningSlice"
 
-// isOpen এবং onClose প্রপস হিসেবে আসবে ড্যাশবোর্ড থেকে
 function CreateStaffModal({ isOpen, onClose }) {
   const dispatch = useDispatch();
 
