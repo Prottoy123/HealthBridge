@@ -33,7 +33,7 @@ export const decodePrescription = createAsyncThunk(
   async (imageFile, { rejectWithValue }) => {
     try {
       const formData = new FormData();
-      formData.append("prescription", imageFile); // ব্যাকএন্ডের multer 필্ডের নাম অনুযায়ী
+      formData.append("prescription", imageFile); 
 
       const response = await api.post("/prescription/decode", formData, {
         headers: {
