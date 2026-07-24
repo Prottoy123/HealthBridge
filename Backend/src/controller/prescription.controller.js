@@ -28,7 +28,7 @@ export const uploadPrescription = asyncHandler(async (req, res) => {
   }
 
   const createPrescription = await Prescription.create({
-    patientId: userLogin.req._id,
+    patientId: req.user._id,
     title,
     doctorName,
     prescriptionDate,

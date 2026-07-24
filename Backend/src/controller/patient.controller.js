@@ -1,8 +1,12 @@
 import { User } from "../models/User.models.js";
 import { PatientProfile } from "../models/PatientProfile.models.js";
 import { DoctorProfile } from "../models/DoctorProfile.models.js";
+import { MedicalRecord } from "../models/medicalRecord.models.js";
 import { ApiResponse } from "../utils/apiResponse.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import {
+  uploadOnCloudinary,
+  deleteFromCloudinary,
+} from "../utils/cloudinary.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
 import { Appointment } from "../models/appoinment.models.js";
@@ -142,12 +146,12 @@ export const uploadMedicalRecord = asyncHandler(async (req, res) => {
 });
 
 export const getAvailableSlots = asyncHandler(async (req, res) => {
-const { doctorId } = req.params; 
-const { date } = req.query; 
+  const { doctorId } = req.params;
+  const { date } = req.query;
 
-if (!doctorId || !date) {
-  throw new ApiError(400, "DoctorId and Date are required");
-}
+  if (!doctorId || !date) {
+    throw new ApiError(400, "DoctorId and Date are required");
+  }
 
   const targetDate = new Date(date);
 
@@ -263,7 +267,7 @@ export const cancelAppoinment = asyncHandler(async (req, res) => {
   //Emit the real time notification to the staff
   const io = req.app.get("io");
   // need the same room name in frontend (staff_desk)
-  io.to("staff_desk").emit("queue_update", cancel); 
+  io.to("staff_desk").emit("queue_update", cancel);
 
   return res
     .status(200)
@@ -324,7 +328,7 @@ export const getDoctorList = asyncHandler(async (req, res) => {
         }),
       },
     },
-    //5th - showing all the details 
+    //5th - showing all the details
     {
       $project: {
         qualifications: 1,
