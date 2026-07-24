@@ -1,10 +1,11 @@
+import mongoose from "mongoose";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
 import { Message } from "../models/message.models.js";
 import { FollowUp } from "../models/followUp.models.js";
-import { DoctorProfile } from "../models/doctorProfile.models.js"; 
+import { DoctorProfile } from "../models/doctorProfile.models.js";
 
 export const getChatHistory = asyncHandler(async (req, res) => {
   const { appointmentId } = req.params;
@@ -87,4 +88,76 @@ export const getChatHistory = asyncHandler(async (req, res) => {
       "Chat history fetched successfully"
     )
   );
+});
+
+export const getPatientFollowups = asyncHandler(async (req, res) => {
+  const patientId = req.user._id;
+
+  const pipeline = [
+    {
+      $lookup: {
+        from: "appointments",
+        localField: "originalAppointmentId",
+        foreignField: "_id",
+        as: "appointmentDetails",
+      },
+    },
+    {
+      $unwind: "$appointmentDetails",
+    },
+
+    {
+      $match: {
+        "appointmentDetails.patientId": new mongoose.Types.ObjectId(patientId),
+      },
+    },
+
+    {
+      $lookup: {
+        from: "users",
+        localField: "appointmentDetails.doctorId",
+        foreignField: "_id",
+        as: "doctorInfo",
+      },
+    },
+    {
+      $unwind: "$doctorInfo",
+    },
+
+    {
+      $sort: { createdAt: -1 },
+    },
+
+    {
+      $project: {
+        _id: 1,
+        status: 1,
+        unlocksAt: 1,
+        expiresAt: 1,
+        appointmentId: "$appointmentDetails._id",
+        appointmentDate: "$appointmentDetails.appointmentDate",
+        doctorName: "$doctorInfo.fullName",
+        doctorImage: "$doctorInfo.profileImage",
+      },
+    },
+  ];
+
+  const followups = await FollowUp.aggregate(pipeline);
+
+  if (!followups) {
+    throw new ApiError(
+      500,
+      "Failed to fetch patient follow-ups from the database"
+    );
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        followups,
+        "Patient chat history and active follow-ups fetched successfully"
+      )
+    );
 });
