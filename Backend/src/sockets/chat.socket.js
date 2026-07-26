@@ -28,7 +28,11 @@ export const initializeChatEvents = (io, socket) => {
         originalAppointmentId: roomId,
       });
 
-      if (!checking || checking.status !== "ACTIVE") {
+      if (
+        !checking ||
+        checking.status !== "ACTIVE" ||
+        new Date(checking.expiresAt) < new Date()
+      ) {
         return socket.emit("error", {
           status: 403,
           message: "Chat is closed or not found",

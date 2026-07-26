@@ -114,14 +114,31 @@ export const getPatientFollowups = asyncHandler(async (req, res) => {
 
     {
       $lookup: {
-        from: "users",
+        from: "doctorprofiles",
         localField: "appointmentDetails.doctorId",
+        foreignField: "_id",
+        as: "doctorProfileInfo",
+      },
+    },
+    {
+      $unwind: {
+        path: "$doctorProfileInfo",
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "doctorProfileInfo.userId",
         foreignField: "_id",
         as: "doctorInfo",
       },
     },
     {
-      $unwind: "$doctorInfo",
+      $unwind: {
+        path: "$doctorInfo",
+        preserveNullAndEmptyArrays: true,
+      },
     },
 
     {

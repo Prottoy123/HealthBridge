@@ -60,7 +60,7 @@ export const updatePatientProfile = asyncHandler(async (req, res) => {
   const updatedProfile = await PatientProfile.findOneAndUpdate(
     { userId: req.user._id },
     { $set: updateData },
-    { new: true, runValidators: true }
+    { returnDocument: "after", runValidators: true }
   );
 
   if (!updatedProfile) {
@@ -212,7 +212,7 @@ export const bookAppointment = asyncHandler(async (req, res) => {
         },
       },
       {
-        new: true,
+        returnDocument: "after",
       }
     );
 
@@ -257,7 +257,7 @@ export const cancelAppoinment = asyncHandler(async (req, res) => {
   };
 
   const cancel = await Appointment.findOneAndUpdate(filter, update, {
-    new: true,
+    returnDocument: "after",
   });
 
   if (!cancel) {

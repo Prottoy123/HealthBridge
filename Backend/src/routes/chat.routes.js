@@ -4,6 +4,8 @@ import {
   getPatientFollowups,
 } from "../controller/chat.controller.js";
 import { verifyJWT } from "../middleware/userAuth.middleware.js";
+import { restrictTo } from "../middleware/role.middleware.js";
+
 
 const router = Router();
 

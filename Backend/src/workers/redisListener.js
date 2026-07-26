@@ -39,7 +39,7 @@ export const initializeRedisListener = async () => {
           const updatedChat = await FollowUp.findOneAndUpdate(
             { originalAppointmentId: appointmentId },
             { $set: { status: "ACTIVE" } },
-            { new: true }
+            { returnDocument: "after" }
           );
 
           if (updatedChat) {
@@ -82,7 +82,7 @@ export const initializeRedisListener = async () => {
           const updatedChat = await FollowUp.findOneAndUpdate(
             { originalAppointmentId: appointmentId },
             { $set: { status: "CLOSED" } },
-            { new: true }
+            { returnDocument: "after" }
           );
 
           if (updatedChat) {

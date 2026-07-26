@@ -99,7 +99,7 @@ export const verifyDoctor = asyncHandler(async (req, res) => {
   const updatedUser = await User.findByIdAndUpdate(
     doctor.userId._id,
     { $set: { status: "ACTIVE" } },
-    { new: true }
+    { returnDocument: "after" }
   );
 
   if (!updatedUser) {

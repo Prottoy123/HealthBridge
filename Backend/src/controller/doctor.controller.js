@@ -371,7 +371,7 @@ export const completeVisit = asyncHandler(async (req, res) => {
         },
       },
       {
-        new: true,
+        returnDocument: "after",
         session,
       }
     );
@@ -393,6 +393,7 @@ export const completeVisit = asyncHandler(async (req, res) => {
         {
           originalAppointmentId: appointmentId,
           type: "POST_MEDICATION_CHAT",
+          status: followUpDays === 0 ? "ACTIVE" : "SCHEDULED",
           unlocksAt: unlocksAt,
           expiresAt: expiresAt,
         },
@@ -408,15 +409,26 @@ export const completeVisit = asyncHandler(async (req, res) => {
 
     try {
       const redisClient = getRedis();
-      const redisKey = `chat_unlock:${appointmentId}`;
-      const redisExecution = await redisClient.set(
-        redisKey,
-        "locked",
-        "EX",
-        redisTTl
-      );
+      if (followUpDays > 0) {
+        const redisKey = `chat_unlock:${appointmentId}`;
+        await redisClient.set(
+          redisKey,
+          "locked",
+          "EX",
+          redisTTl
+        );
+      } else {
+        const closeTimerKey = `chat_close:${appointmentId}`;
+        const closeTimerTTL = 48 * 60 * 60; // 48 hours
+        await redisClient.set(
+          closeTimerKey,
+          "closing_soon",
+          "EX",
+          closeTimerTTL
+        );
+      }
     } catch (err) {
-      console.error("Failed to set Redis key for follow-up lock:", err);
+      console.error("Failed to set Redis key for follow-up lock/close:", err);
     }
 
     return res.status(200).json(
@@ -451,6 +463,7 @@ export const getActiveFollowups = asyncHandler(async (req, res) => {
       // First, filter ONLY ACTIVE follow-ups (Massive performance boost)
       $match: {
         status: "ACTIVE",
+        expiresAt: { $gt: new Date() },
       },
     },
     {
