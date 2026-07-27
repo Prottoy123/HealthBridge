@@ -3,12 +3,12 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { fetchPatientProfile } from "./Slices/patientSlice";
 import AiSymptomBot from "./Components/AiSymptomBot";
+import { Loader2, AlertCircle, RefreshCw, User, Search, FolderLock, Activity, Stethoscope } from "lucide-react";
 
 const PatientDashboard = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // Redux State Extraction
   const { profile, status } = useSelector((state) => state.patient);
   const { symptomSummary } = useSelector((state) => state.ai);
 
@@ -18,154 +18,151 @@ const PatientDashboard = () => {
     }
   }, [profile, status, dispatch]);
 
-  // Navigation Handlers (Zero-friction routing)
-  const handleFindDoctor = () => {
-    navigate("/patient/get-doctors");
-  };
+  const handleFindDoctor = () => navigate("/patient/get-doctors");
+  const handleOpenVault = () => navigate("/patient/vault");
 
-  const handleOpenVault = () => {
-    navigate("/patient/vault");
-  };
-
-  // Guard Rail: Loading State
   if (status === "loading") {
     return (
-      <div className="flex flex-col items-center justify-center h-64 space-y-4">
-        <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-        <p className="text-slate-500 font-medium animate-pulse">
-          Loading your dashboard...
+      <div className="flex flex-col items-center justify-center h-[70vh] space-y-4">
+        <Loader2 className="w-10 h-10 text-teal-500 animate-spin" />
+        <p className="text-teal-400 font-semibold tracking-widest uppercase text-xs animate-pulse">
+          Loading Dashboard...
         </p>
       </div>
     );
   }
 
-  // Error State Handling (Optional but recommended)
   if (status === "failed") {
     return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-red-500 font-medium">
-          Failed to load profile. Please refresh.
-        </p>
+      <div className="flex items-center justify-center h-[70vh]">
+        <div className="bg-[#051316] border border-rose-500/20 px-8 py-8 rounded-3xl flex flex-col items-center max-w-sm w-full text-center">
+          <AlertCircle className="w-12 h-12 text-rose-500 mb-4" />
+          <p className="text-rose-400 font-bold text-sm tracking-wide">
+            Failed to Load Dashboard.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-6 flex items-center justify-center gap-2 w-full px-6 py-3 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 rounded-xl text-xs font-bold uppercase tracking-widest transition-all"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Refresh Page
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      {/* 1. Greeting Section */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">
-            Welcome back
-            {profile?.user?.fullName ? `, ${profile.user.fullName}` : ""} 👋
-          </h1>
-          <p className="text-gray-500 mt-1">How are you feeling today?</p>
-        </div>
-      </div>
-
-      {/* 2. AI Triage Mounting Zone (The Core Feature) */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-2xl border border-blue-100 shadow-sm">
-        <div className="mb-4">
-          <h2 className="text-lg font-semibold text-blue-900">
-            AI Symptom Checker
-          </h2>
-          <p className="text-sm text-blue-700">
-            Describe your symptoms and let our AI guide you to the right
-            specialist.
-          </p>
-        </div>
-
-        {/* AiSymptomBot কম্পোনেন্টটি এখানে রেন্ডার হবে */}
-        <div className="bg-white rounded-xl p-4 shadow-inner">
-          {/* <AiSymptomBot /> */}
-          <div className="text-center text-gray-400 py-10 border-2 border-dashed border-gray-200 rounded-lg">
-            <AiSymptomBot/>
+    <div className="flex flex-col gap-6 animate-in fade-in duration-700 max-w-[1400px] mx-auto min-h-[calc(100vh-8rem)]">
+      
+      {/* ========================================================= */}
+      {/* TOP PORTION: GREETING & QUICK ACTIONS                     */}
+      {/* ========================================================= */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        {/* 1. Dynamic Greeting Card (Spans 7/12) */}
+        <div className="lg:col-span-7 bg-[#051316] p-8 rounded-[2rem] border border-white/[0.05] relative overflow-hidden group flex flex-col justify-center">
+          
+          <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 h-full">
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <span className="px-3 py-1.5 bg-[#03090a] border border-white/[0.05] rounded-full text-[10px] font-bold tracking-widest uppercase text-slate-400 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse"></span>
+                  System Online
+                </span>
+              </div>
+              <h1 className="text-3xl sm:text-4xl font-bold text-slate-200 tracking-tight">
+                Hello, {profile?.user?.fullName?.split(' ')[0] || "Patient"}.
+              </h1>
+              <p className="text-slate-400 mt-3 text-sm max-w-md leading-relaxed">
+                Your medical dashboard is ready. View your records, book an appointment, or check your symptoms below.
+              </p>
+            </div>
+            
+            <div className="hidden sm:flex w-24 h-24 rounded-full bg-[#03090a] border-4 border-white/[0.02] items-center justify-center shrink-0">
+               <User className="w-10 h-10 text-teal-500/50" />
+            </div>
           </div>
         </div>
 
-        {/* যদি আগে থেকে সামারি থাকে, তবে ইউজারকে একটি রিমাইন্ডার দেখাবে */}
-        {symptomSummary && (
-          <div className="mt-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm flex justify-between items-center">
-            <span>You have an active AI recommendation.</span>
+        {/* 2. Quick Actions Grid (Spans 5/12) */}
+        <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
+          
+          {/* Action: Book Specialist */}
+          <button
+            onClick={handleFindDoctor}
+            className="group flex flex-col justify-center items-start text-left bg-[#051316] p-6 rounded-[2rem] border border-white/[0.05] hover:border-teal-500/30 hover:bg-white/[0.02] transition-colors relative overflow-hidden h-full min-h-[160px]"
+          >
+            <div className="w-12 h-12 rounded-xl bg-[#03090a] border border-white/[0.05] flex items-center justify-center mb-4 group-hover:bg-teal-500/10 group-hover:border-teal-500/20 transition-colors">
+              <Search className="w-5 h-5 text-slate-400 group-hover:text-teal-400" />
+            </div>
+            <h3 className="font-semibold text-slate-200 text-lg group-hover:text-teal-400 transition-colors">Find Specialist</h3>
+            <p className="text-xs text-slate-500 mt-1.5 font-medium leading-relaxed">Browse our network of medical professionals.</p>
+          </button>
+
+          {/* Action: Medical Vault */}
+          <button
+            onClick={handleOpenVault}
+            className="group flex flex-col justify-center items-start text-left bg-[#051316] p-6 rounded-[2rem] border border-white/[0.05] hover:border-cyan-500/30 hover:bg-white/[0.02] transition-colors relative overflow-hidden h-full min-h-[160px]"
+          >
+            <div className="w-12 h-12 rounded-xl bg-[#03090a] border border-white/[0.05] flex items-center justify-center mb-4 group-hover:bg-cyan-500/10 group-hover:border-cyan-500/20 transition-colors">
+              <FolderLock className="w-5 h-5 text-slate-400 group-hover:text-cyan-400" />
+            </div>
+            <h3 className="font-semibold text-slate-200 text-lg group-hover:text-cyan-400 transition-colors">Medical Records</h3>
+            <p className="text-xs text-slate-500 mt-1.5 font-medium leading-relaxed">Access your prescriptions & lab reports.</p>
+          </button>
+        </div>
+      </div>
+
+      {/* ========================================================= */}
+      {/* BOTTOM PORTION: AI TRIAGE                                 */}
+      {/* ========================================================= */}
+      <div className="flex-1 bg-[#051316] p-6 sm:p-8 rounded-[2rem] border border-white/[0.05] flex flex-col relative overflow-hidden min-h-[500px]">
+        
+        {/* Header */}
+        <div className="mb-6 relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-8 h-8 rounded-lg bg-[#03090a] flex items-center justify-center border border-white/[0.05]">
+                <Activity className="w-4 h-4 text-teal-400" />
+              </div>
+              <span className="text-[10px] font-bold text-teal-400 uppercase tracking-widest flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-500"></span>
+                </span>
+                AI Assistant Ready
+              </span>
+            </div>
+            <h2 className="text-2xl font-bold text-slate-200 tracking-tight">
+              Check Symptoms
+            </h2>
+            <p className="text-xs text-slate-400 mt-1.5 leading-relaxed max-w-xl">
+              Describe how you are feeling below. Our AI assistant will generate a summary to help your doctor understand your condition better.
+            </p>
+          </div>
+          
+          {/* Action button if summary is ready */}
+          {symptomSummary && (
             <button
               onClick={handleFindDoctor}
-              className="font-semibold underline"
+              className="px-6 py-2.5 bg-teal-500 hover:bg-teal-600 text-slate-900 font-bold text-xs rounded-xl shadow-sm transition-colors uppercase tracking-widest whitespace-nowrap flex items-center gap-2 shrink-0"
             >
-              Find Doctor Now
+              <Stethoscope className="w-4 h-4" />
+              Consult Specialist
             </button>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
 
-      {/* 3. Quick Action Widgets (Service-on-demand Model) */}
-      <div>
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">
-          Quick Actions
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Action Card: Find Specialist */}
-          <div
-            onClick={handleFindDoctor}
-            className="group cursor-pointer bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-blue-500 hover:shadow-md transition-all duration-200"
-          >
-            <div className="flex items-center space-x-4">
-              <div className="bg-blue-100 p-3 rounded-xl group-hover:bg-blue-600 transition-colors duration-200">
-                <svg
-                  className="w-6 h-6 text-blue-600 group-hover:text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                  />
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-800">
-                  Find a Specialist
-                </h3>
-                <p className="text-sm text-gray-500 mt-1">
-                  Book a new appointment
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Action Card: Medical Vault */}
-          <div
-            onClick={handleOpenVault}
-            className="group cursor-pointer bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-emerald-500 hover:shadow-md transition-all duration-200"
-          >
-            <div className="flex items-center space-x-4">
-              <div className="bg-emerald-100 p-3 rounded-xl group-hover:bg-emerald-600 transition-colors duration-200">
-                <svg
-                  className="w-6 h-6 text-emerald-600 group-hover:text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-800">Medical Vault</h3>
-                <p className="text-sm text-gray-500 mt-1">
-                  Access reports & prescriptions
-                </p>
-              </div>
-            </div>
+        {/* The AI Component */}
+        <div className="flex-1 flex flex-col relative z-10 w-full min-h-[400px]">
+          <div className="bg-[#03090a] rounded-[1.5rem] border border-white/[0.05] p-2 flex-1 flex flex-col overflow-hidden">
+            <AiSymptomBot />
           </div>
         </div>
+
       </div>
+
     </div>
   );
 };
