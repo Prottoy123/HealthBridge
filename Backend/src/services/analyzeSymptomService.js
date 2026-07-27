@@ -1,6 +1,6 @@
 import { z } from "zod";
 import aiModel from "../config/ai.config.js";
-import { ApiError } from "../utils/ApiError.js";
+import { ApiError } from "../utils/apiError.js";
 
 // 1. Input Validation Schema: For data coming from the frontend
 export const symptomInputSchema = z.object({

@@ -14,7 +14,6 @@ export const initializeChatEvents = (io, socket) => {
     }
 
     socket.join(roomId);
-    console.log(`⚡ User ${socket.user._id} joined room: ${roomId}`);
   });
 
   // ২. Send Message (Fixed Payload Mapping)
@@ -73,10 +72,9 @@ export const initializeChatEvents = (io, socket) => {
     if (!roomId) return;
 
     socket.leave(roomId);
-    console.log(`🔌 User ${socket.user._id} left room: ${roomId}`);
   });
 
   socket.on("disconnect", () => {
-    console.log(`❌ Socket disconnected for User: ${socket.user?._id}`);
+    // User disconnected
   });
 };

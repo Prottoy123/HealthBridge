@@ -1,6 +1,6 @@
 import { User } from "../models/User.models.js";
-import { PatientProfile } from "../models/PatientProfile.models.js";
-import { ApiResponse } from "../utils/apiResponse.js";
+import { PatientProfile } from "../models/patientProfile.models.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
@@ -83,7 +83,7 @@ export const getRecordsForDoctor = asyncHandler(async (req, res) => {
   const matchingAppointment = await Appointment.findOne({
     doctorId: doctorProfile._id, 
     patientId: patientId,
-    status: { $in: ["CONFIRMED", "COMPLETED"] },
+    status: { $in: ["CONFIRMED", "COMPLETED", "ACTIVE"] },
     appointmentDate: { $gte: thresholdDate },
   });
 

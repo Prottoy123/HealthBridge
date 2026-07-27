@@ -1,5 +1,5 @@
-import { ApiError } from "../utils/ApiError.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiError } from "../utils/apiError.js";
+import { asyncHandler } from "../utils/AsyncHandler.js";
 import { getRedis } from "../config/redis.config.js";
 
 export const rateLimiter = (keyPrefix, limit, windowTime) => {
