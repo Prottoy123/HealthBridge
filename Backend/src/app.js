@@ -5,6 +5,7 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import { initializeSocket } from "./sockets/socketHandler.js";
 
+
 const app = express();
 const server = createServer(app);
 
@@ -25,7 +26,6 @@ app.use(
 );
 app.use(express.json({ limit: "16kb" }));
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
-app.use(express.static("public"));
 app.use(cookieParser());
 
 import UserRouter from "./routes/user.routes.js";
