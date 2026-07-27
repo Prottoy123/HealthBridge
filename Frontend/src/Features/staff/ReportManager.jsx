@@ -1,35 +1,27 @@
 import React, { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import toast from "react-hot-toast";
 import api from "../../services/api";
-
-// Importing the required thunks from staffSlice
-import {
-  uploadPatientReport,
-} from "../staff/Slices/staffSlice";
+import { Search, UploadCloud, CheckCircle, File, Loader2, ArrowRight } from "lucide-react";
+import { uploadPatientReport } from "../staff/Slices/staffSlice";
 
 const ReportManager = () => {
   const dispatch = useDispatch();
 
-  //Local States for Search Engine
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
 
-  // Local States Upload
   const [selectedPatientId, setSelectedPatientId] = useState("");
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
 
-  // Debounced Search Effect
   useEffect(() => {
-    // 1. If less than 2 characters, clear results to save API calls
     if (searchTerm.length < 2) {
       setSearchResults([]);
       return;
     }
 
-    // 2. Debounce Timer (Waits 500ms after user stops typing)
     const handler = setTimeout(async () => {
       setIsSearching(true);
       try {
@@ -44,11 +36,9 @@ const ReportManager = () => {
       }
     }, 500);
 
-    // 3. Cleanup function to cancel the previous timer if user keeps typing
     return () => clearTimeout(handler);
   }, [searchTerm]);
 
-  // File Selection Protocol
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
     if (files.length > 5) {
@@ -58,7 +48,6 @@ const ReportManager = () => {
     setSelectedFiles(files);
   };
 
-  // Upload Execution Protocol
   const handleUpload = async (e) => {
     e.preventDefault();
 
@@ -84,7 +73,6 @@ const ReportManager = () => {
       await dispatch(uploadPatientReport(formData)).unwrap();
       toast.success("Medical records securely linked to the patient.");
 
-      // Post-Upload System Reset
       setSelectedPatientId("");
       setSearchTerm("");
       setSearchResults([]);
@@ -97,69 +85,68 @@ const ReportManager = () => {
     }
   };
 
-  // --- Search Result Selection Handler ---
   const handleSelectPatient = (patient) => {
     setSelectedPatientId(patient._id);
-    setSearchTerm(patient.fullName); // Set input text to patient name
-    setSearchResults([]); // Close the dropdown popup
+    setSearchTerm(patient.fullName);
+    setSearchResults([]); 
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-6 bg-white rounded-xl border border-gray-200 shadow-sm mt-8">
-      <div className="mb-8 border-b border-gray-100 pb-4">
-        <h2 className="text-2xl font-bold text-gray-800">
+    <div className="max-w-4xl mx-auto pb-10">
+      <div className="mb-8">
+        <h2 className="text-2xl font-semibold text-white tracking-tight flex items-center gap-2">
+          <File className="w-6 h-6 text-teal-400" />
           Medical Records Vault
         </h2>
-        <p className="text-gray-500 text-sm mt-1">
-          Upload and link physical lab reports directly to a patient's global
-          health profile.
+        <p className="text-sm text-slate-400 mt-1">
+          Securely upload and link lab reports to a patient's global health profile.
         </p>
       </div>
 
       <form onSubmit={handleUpload} className="space-y-6">
-        {/* --- Advanced Patient Search Engine --- */}
-        <div className="bg-blue-50 p-6 rounded-xl border border-blue-100">
-          <label className="block text-sm font-bold text-blue-900 mb-2">
-            Search Patient Identity <span className="text-red-500">*</span>
+        
+        {/* Patient Identity Engine */}
+        <div className="bg-[#03090a] p-6 rounded-2xl border border-white/[0.05]">
+          <label className="block text-sm font-medium text-slate-300 mb-2">
+            Target Patient Identity <span className="text-teal-400">*</span>
           </label>
 
           <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <Search className="w-4 h-4 text-slate-500" />
+            </div>
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
-                // If user alters the name, clear the selected ID to enforce re-selection
                 if (selectedPatientId) setSelectedPatientId("");
               }}
-              placeholder="Type name or email to search..."
-              className="w-full px-4 py-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white text-gray-700 shadow-sm"
+              placeholder="Search by patient name or email..."
+              className="w-full bg-[#051316] border border-white/[0.05] rounded-xl pl-11 pr-12 py-3 text-sm font-medium text-slate-200 focus:outline-none focus:border-teal-500/50"
               autoComplete="off"
               required
             />
 
-            {/* Loading Indicator */}
             {isSearching && (
-              <div className="absolute right-4 top-3.5 text-blue-500 text-sm font-medium">
-                Searching...
+              <div className="absolute right-4 top-3.5">
+                <Loader2 className="w-4 h-4 text-teal-400 animate-spin" />
               </div>
             )}
 
-            {/* Search Results Dropdown Popup */}
             {searchResults.length > 0 && (
-              <ul className="absolute z-20 w-full bg-white border border-gray-200 rounded-lg shadow-xl mt-1 max-h-60 overflow-y-auto">
+              <ul className="absolute z-20 w-full bg-[#051316] border border-white/[0.1] rounded-xl shadow-2xl mt-2 max-h-60 overflow-y-auto divide-y divide-white/[0.05]">
                 {searchResults.map((patient) => (
                   <li
                     key={patient._id}
                     onClick={() => handleSelectPatient(patient)}
-                    className="p-3 hover:bg-blue-50 cursor-pointer border-b border-gray-50 last:border-0 transition-colors flex flex-col"
+                    className="p-3 hover:bg-white/[0.05] cursor-pointer transition-colors flex flex-col"
                   >
-                    <span className="font-bold text-gray-800">
+                    <span className="font-medium text-slate-200">
                       {patient.fullName}
                     </span>
-                    <span className="text-xs text-gray-500">
-                      {patient.email}{" "}
-                      {patient.phone ? `| Ph: ${patient.phone}` : ""}
+                    <span className="text-xs text-slate-500 mt-0.5">
+                      {patient.email} {patient.phone ? `| Ph: ${patient.phone}` : ""}
                     </span>
                   </li>
                 ))}
@@ -167,17 +154,30 @@ const ReportManager = () => {
             )}
           </div>
 
-          <p className="text-xs text-blue-600 mt-2">
-            {selectedPatientId
-              ? "✅ Patient verified and locked for record upload."
-              : "Search by name or email, then click on the correct profile from the list."}
+          <p className={`text-xs mt-3 flex items-center gap-1 ${selectedPatientId ? "text-teal-400" : "text-slate-500"}`}>
+            {selectedPatientId ? (
+              <>
+                <CheckCircle className="w-3.5 h-3.5" />
+                Patient identity verified and locked.
+              </>
+            ) : (
+              "Please search and select a verified patient profile from the list."
+            )}
           </p>
         </div>
 
-        {/* --- Secure Dropzone Area --- */}
-        <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 flex flex-col items-center justify-center text-center bg-gray-50 hover:bg-gray-100 transition-colors">
-          <label className="cursor-pointer bg-white px-6 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors">
-            Browse Medical Files
+        {/* Secure Dropzone Area */}
+        <div className="bg-[#03090a] p-8 rounded-2xl border border-white/[0.05] flex flex-col items-center justify-center text-center transition-colors">
+          <div className="w-16 h-16 bg-[#051316] border border-white/[0.05] rounded-xl flex items-center justify-center mb-4">
+             <UploadCloud className="w-8 h-8 text-slate-500" />
+          </div>
+          <h3 className="text-lg font-medium text-slate-200 mb-1">Select Medical Files</h3>
+          <p className="text-sm text-slate-400 mb-6">
+            Supported formats: PDF, PNG, JPG (Max 5 files)
+          </p>
+          
+          <label className="cursor-pointer bg-[#051316] hover:bg-white/[0.05] px-6 py-3 border border-white/[0.1] rounded-xl text-sm font-medium text-slate-200 transition-colors">
+            Browse Files
             <input
               id="file-upload"
               type="file"
@@ -188,20 +188,15 @@ const ReportManager = () => {
             />
           </label>
 
-          <p className="mt-3 text-xs font-medium text-gray-500">
-            Supported formats: PDF, PNG, JPG (Max 5 files)
-          </p>
-
-          {/* Staged Files Preview */}
           {selectedFiles.length > 0 && (
-            <div className="mt-6 w-full text-left bg-white p-4 rounded-lg border border-gray-200">
-              <h4 className="text-sm font-bold text-gray-800 mb-3">
-                Staged Files:
+            <div className="mt-8 w-full max-w-md text-left bg-[#051316] p-4 rounded-xl border border-white/[0.05]">
+              <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">
+                Staged Files ({selectedFiles.length})
               </h4>
-              <ul className="space-y-2 text-sm text-gray-600 font-medium">
+              <ul className="space-y-2">
                 {selectedFiles.map((file, index) => (
-                  <li key={index} className="flex items-center gap-2">
-                    <span className="text-green-500">✓</span>
+                  <li key={index} className="flex items-center gap-3 text-sm text-slate-300">
+                    <CheckCircle className="w-4 h-4 text-teal-500 shrink-0" />
                     <span className="truncate">{file.name}</span>
                   </li>
                 ))}
@@ -210,20 +205,23 @@ const ReportManager = () => {
           )}
         </div>
 
-        {/* --- Transaction Submit Action --- */}
-        <div className="flex justify-end pt-4">
+        <div className="flex justify-end pt-2">
           <button
             type="submit"
-            disabled={
-              isUploading || selectedFiles.length === 0 || !selectedPatientId
-            }
-            className={`px-8 py-3 rounded-lg font-bold text-white transition-all shadow-md ${
-              isUploading || selectedFiles.length === 0 || !selectedPatientId
-                ? "bg-purple-300 cursor-not-allowed"
-                : "bg-purple-600 hover:bg-purple-700"
-            }`}
+            disabled={isUploading}
+            className="px-6 py-3 bg-teal-500 hover:bg-teal-600 disabled:opacity-50 disabled:cursor-not-allowed text-slate-900 font-semibold rounded-xl transition-colors text-sm flex items-center gap-2"
           >
-            {isUploading ? "Uploading to Secure Vault..." : "Confirm Upload"}
+            {isUploading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Uploading to Vault...
+              </>
+            ) : (
+              <>
+                Confirm Upload
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
           </button>
         </div>
       </form>
