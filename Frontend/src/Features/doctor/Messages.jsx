@@ -1,154 +1,132 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { fetchActiveFollowups } from "./Slices/doctorSlice";
+import { MessageSquare, Clock, ShieldCheck, Inbox } from "lucide-react";
 
 const Messages = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { activeFollowUps, isActiveFollowUpsLoading, activeFollowUpsError } =
-    useSelector((state) => state.doctor);
+  const { activeFollowUps, isActiveFollowUpsLoading, activeFollowUpsError } = useSelector((state) => state.doctor);
 
   useEffect(() => {
     dispatch(fetchActiveFollowups());
   }, [dispatch]);
 
   const handleOpenChat = (appointmentId) => {
-    navigate(`/doctor/messages/${appointmentId}`);
+    navigate(`/doctor/messages/${appointmentId}`, { state: { status: "ACTIVE" } });
   };
 
-  // The TTL Engine (Time-to-Live Calculator)
   const calculateTimeToLive = (expiresAt) => {
-    if (!expiresAt)
-      return { text: "Expired", color: "text-red-600 bg-red-100" };
+    if (!expiresAt) return { text: "Expired", color: "text-rose-500 bg-rose-500/10 border-rose-500/20", active: false };
 
     const difference = new Date(expiresAt) - new Date();
-
-    if (difference <= 0) {
-      return { text: "Expired", color: "text-red-600 bg-red-100" };
-    }
+    if (difference <= 0) return { text: "Closed", color: "text-rose-500 bg-rose-500/10 border-rose-500/20", active: false };
 
     const totalMinutes = Math.floor(difference / (1000 * 60));
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
 
-    // Warning color if less than 6 hours remaining
-    const colorClass =
-      hours < 6
-        ? "text-orange-600 bg-orange-100"
-        : "text-green-600 bg-green-100";
-
-    return { text: `${hours}h ${minutes}m remaining`, color: colorClass };
+    const colorClass = hours < 6 ? "text-amber-400 bg-amber-500/10 border-amber-500/20" : "text-teal-400 bg-teal-500/10 border-teal-500/20";
+    return { text: `${hours}h ${minutes}m`, color: colorClass, active: true };
   };
 
-  // GUARD 1: API Error State
   if (activeFollowUpsError) {
     return (
-      <div className="p-6 text-center text-red-500 bg-red-50 rounded-lg m-6">
-        <p className="font-semibold">Failed to load Inbox</p>
-        <p className="text-sm">{activeFollowUpsError}</p>
+      <div className="flex items-center justify-center h-full min-h-[400px]">
+        <div className="p-6 bg-rose-500/10 border border-rose-500/20 rounded-xl text-center">
+          <h3 className="text-lg font-semibold text-rose-500 mb-2">Inbox Error</h3>
+          <p className="text-slate-400">{activeFollowUpsError}</p>
+        </div>
       </div>
     );
   }
 
-  // GUARD 2: Loading State (Fixed undefined return)
-  if (isActiveFollowUpsLoading) {
-    return (
-      <div className="flex justify-center items-center h-[60vh]">
-        <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
-  // THE MAIN RETURN UI
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-800">
-          Active Consultations
-        </h1>
-        <p className="text-slate-500 text-sm mt-1">
-          Patients currently within their 48-hour follow-up window.
-        </p>
+    <div className="w-full max-w-6xl mx-auto flex flex-col md:flex-row gap-6 h-[calc(100vh-8rem)]">
+      
+      {/* LEFT PANE: Inbox List */}
+      <div className="w-full md:w-96 shrink-0 flex flex-col h-full bg-[#03090a] rounded-2xl border border-white/[0.05] overflow-hidden">
+         <div className="p-5 border-b border-white/[0.05] flex items-center gap-3">
+           <MessageSquare className="w-5 h-5 text-teal-400" />
+           <div>
+             <h2 className="text-lg font-semibold text-slate-200">Secure Inbox</h2>
+             <p className="text-xs text-slate-400 mt-0.5">Active follow-ups</p>
+           </div>
+         </div>
+
+         <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2">
+            {isActiveFollowUpsLoading ? (
+              <div className="flex items-center justify-center h-full">
+                 <div className="w-5 h-5 border-2 border-teal-400 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : !activeFollowUps || activeFollowUps.length === 0 ? (
+               <div className="flex flex-col items-center justify-center h-full text-center px-4">
+                  <Inbox className="w-8 h-8 text-slate-600 mb-3" />
+                  <p className="text-slate-300 font-medium text-sm">Inbox Clear</p>
+                  <p className="text-xs text-slate-500 mt-1">No active follow-ups</p>
+               </div>
+            ) : (
+              activeFollowUps.map((chat) => {
+                const ttl = calculateTimeToLive(chat.expiresAt);
+                return (
+                  <button
+                    key={chat._id}
+                    onClick={() => ttl.active && handleOpenChat(chat.originalAppointmentId)}
+                    disabled={!ttl.active}
+                    className={`w-full text-left p-4 rounded-xl transition-colors flex flex-col gap-3 ${
+                      ttl.active 
+                        ? "bg-[#051316] hover:bg-white/[0.05] border border-white/[0.02]" 
+                        : "bg-white/[0.01] opacity-60 border border-transparent cursor-not-allowed"
+                    }`}
+                  >
+                    <div className="flex justify-between items-start w-full">
+                      <div className="flex items-center gap-3">
+                         <img 
+                           src={chat.patientInfo.profileImage || "https://via.placeholder.com/150"} 
+                           alt="Patient" 
+                           className="w-10 h-10 rounded-lg object-cover border border-white/[0.05]" 
+                         />
+                         <div>
+                           <h4 className={`font-medium text-sm transition-colors ${ttl.active ? 'text-slate-200 hover:text-teal-400' : 'text-slate-400'}`}>
+                             {chat.patientInfo.fullName}
+                           </h4>
+                           <p className="text-xs text-slate-500 mt-0.5">
+                             {new Date(chat.appointmentDetails.appointmentDate).toLocaleDateString()}
+                           </p>
+                         </div>
+                      </div>
+                      
+                      <div className="flex flex-col items-end">
+                         <span className="text-[10px] text-slate-500 mb-1 flex items-center gap-1">
+                           <Clock className="w-3 h-3" /> Time Left
+                         </span>
+                         <span className={`text-xs font-medium px-2 py-0.5 rounded border ${ttl.color}`}>
+                           {ttl.text}
+                         </span>
+                      </div>
+                    </div>
+                  </button>
+                )
+              })
+            )}
+         </div>
       </div>
 
-      {/* GUARD 3: Empty State (Proper JSX instead of raw toast) */}
-      {!activeFollowUps || activeFollowUps.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-64 bg-white border border-slate-200 rounded-xl shadow-sm">
-          <span className="text-4xl mb-3">📭</span>
-          <h3 className="text-lg font-medium text-slate-700">Inbox is empty</h3>
-          <p className="text-sm text-slate-400 mt-1">
-            No active follow-ups at the moment.
+      {/* RIGHT PANE: Placeholder state */}
+      <div className="hidden md:flex flex-1 bg-[#03090a] rounded-2xl border border-white/[0.05] items-center justify-center h-full">
+        <div className="text-center flex flex-col items-center max-w-sm px-6">
+          <div className="w-16 h-16 bg-[#051316] rounded-2xl flex items-center justify-center border border-white/[0.05] mb-5">
+             <ShieldCheck className="w-8 h-8 text-teal-500/70" />
+          </div>
+          <h2 className="text-xl font-semibold text-slate-200 mb-2">Secure Communications</h2>
+          <p className="text-sm text-slate-400 leading-relaxed">
+            Select an active channel from your inbox to initiate an end-to-end encrypted connection with your patient.
           </p>
         </div>
-      ) : (
-        /* INBOX RADAR LIST */
-        <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-          <ul className="divide-y divide-slate-100">
-            {activeFollowUps.map((chat) => {
-              const ttl = calculateTimeToLive(chat.expiresAt);
+      </div>
 
-              return (
-                <li
-                  key={chat._id}
-                  onClick={() => handleOpenChat(chat.originalAppointmentId)}
-                  className="flex items-center justify-between p-5 hover:bg-slate-50 transition cursor-pointer group"
-                >
-                  <div className="flex items-center space-x-4">
-                    <img
-                      src={
-                        chat.patientInfo.profileImage ||
-                        "https://via.placeholder.com/150"
-                      }
-                      alt={chat.patientInfo.fullName}
-                      className="w-12 h-12 rounded-full object-cover border border-slate-200"
-                    />
-                    <div>
-                      <h3 className="text-sm font-bold text-slate-800 group-hover:text-blue-600 transition">
-                        {chat.patientInfo.fullName}
-                      </h3>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        Consultation Date:{" "}
-                        {new Date(
-                          chat.appointmentDetails.appointmentDate,
-                        ).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-4">
-                    {/* Time-to-Live Badge */}
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${ttl.color}`}
-                    >
-                      🕒 {ttl.text}
-                    </span>
-
-                    {/* Action Icon */}
-                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-blue-600 group-hover:text-white transition">
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M9 5l7 7-7 7"
-                        ></path>
-                      </svg>
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
     </div>
   );
 };
