@@ -1,7 +1,11 @@
 import { useState } from "react";
 import api from "../../services/api";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
+import { UserPlus, Image as ImageIcon, ChevronDown } from "lucide-react";
 
 const Register = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -9,201 +13,166 @@ const Register = () => {
     role: "PATIENT",
   });
   const [profileImage, setProfileImage] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (formData.password.length < 6) return alert("Password too short");
+    if (formData.password.length < 6) return toast.error("Password must be at least 6 characters.");
+
+    setIsLoading(true);
 
     const submitData = new FormData();
     submitData.append("fullName", formData.fullName);
     submitData.append("email", formData.email);
     submitData.append("password", formData.password);
     submitData.append("role", formData.role);
-    submitData.append("profileImage", profileImage);
+    if (profileImage) submitData.append("profileImage", profileImage);
 
     try {
-      const response = await api.post("/user/register", submitData);
-      console.log("Registration Success:", response.data);
+      await api.post("/user/register", submitData);
+      toast.success("Account created successfully! Please log in.");
+      navigate("/login");
     } catch (error) {
-      console.log("Error:", error); 
+      console.error("Registration failed:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-tr from-teal-50 via-slate-50 to-cyan-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-2xl shadow-xl border border-slate-100 transition-all duration-300 hover:shadow-2xl">
-        {/* Header */}
-        <div className="text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-teal-100 text-teal-600 mb-4 animate-pulse">
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
+    <div className="min-h-screen flex items-center justify-center bg-[#03090a] relative overflow-hidden font-sans py-12 px-4 sm:px-6 lg:px-8">
+      {/* Ambient background glows */}
+      <div className="absolute top-0 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-teal-500/10 rounded-full blur-[150px] pointer-events-none"></div>
+      
+      {/* Main Centered Form Container */}
+      <div className="w-full max-w-md bg-[#051316] border border-white/[0.05] p-6 sm:p-10 rounded-3xl shadow-2xl relative z-10 transition-all duration-300">
+        
+        {/* Logo / Title */}
+        <div className="flex flex-col items-center text-center mb-8">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-400 font-bold mb-4">
+             <UserPlus className="w-6 h-6" />
           </div>
-          <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight">
-            HealthBridge
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-200 leading-tight">
+            Create an Account
           </h2>
-          <p className="mt-2 text-sm text-slate-500">
-            Create your account to access our smart care platform
+          <p className="mt-2.5 text-sm text-slate-400">
+            Join HealthBridge to access secure records and direct consultations.
           </p>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-          <div className="space-y-4">
-            {/* Full Name Input */}
-            <div>
-              <label htmlFor="fullName" className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
-                Full Name
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
-                <input
-                  id="fullName"
-                  name="fullName"
-                  type="text"
-                  required
-                  value={formData.fullName}
-                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 bg-slate-50/50 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent focus:bg-white transition-all duration-200 sm:text-sm"
-                  placeholder="John Doe"
-                />
-              </div>
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Full Name */}
+          <div>
+            <label className="block text-sm font-medium text-slate-400 mb-1.5">
+              Full Name
+            </label>
+            <input
+              type="text"
+              required
+              value={formData.fullName}
+              onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+              className="block w-full px-4 py-3 bg-[#03090a] border border-white/[0.05] rounded-xl text-slate-200 placeholder-slate-600 focus:outline-none focus:border-teal-500/50 transition-colors text-sm"
+              placeholder="John Doe"
+            />
+          </div>
 
-            {/* Email Input */}
-            <div>
-              <label htmlFor="email" className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
-                Email Address
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 bg-slate-50/50 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent focus:bg-white transition-all duration-200 sm:text-sm"
-                  placeholder="john.doe@example.com"
-                />
-              </div>
-            </div>
+          {/* Email */}
+          <div>
+            <label className="block text-sm font-medium text-slate-400 mb-1.5">
+              Email Address
+            </label>
+            <input
+              type="email"
+              required
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              className="block w-full px-4 py-3 bg-[#03090a] border border-white/[0.05] rounded-xl text-slate-200 placeholder-slate-600 focus:outline-none focus:border-teal-500/50 transition-colors text-sm"
+              placeholder="name@example.com"
+            />
+          </div>
 
-            {/* Password Input */}
-            <div>
-              <label htmlFor="password" className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
-                Password
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 00-2 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                </div>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 bg-slate-50/50 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent focus:bg-white transition-all duration-200 sm:text-sm"
-                  placeholder="••••••••"
-                />
-              </div>
-            </div>
+          {/* Password */}
+          <div>
+            <label className="block text-sm font-medium text-slate-400 mb-1.5">
+              Password
+            </label>
+            <input
+              type="password"
+              required
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              className="block w-full px-4 py-3 bg-[#03090a] border border-white/[0.05] rounded-xl text-slate-200 placeholder-slate-600 focus:outline-none focus:border-teal-500/50 transition-colors text-sm"
+              placeholder="••••••••"
+            />
+          </div>
 
-            {/* Role Select Input */}
-            <div>
-              <label htmlFor="role" className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
-                Register As
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                </div>
-                <select
-                  id="role"
-                  name="role"
-                  value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                  className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-lg text-slate-800 bg-slate-50/50 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent focus:bg-white transition-all duration-200 sm:text-sm appearance-none"
-                >
-                  <option value="PATIENT">Patient</option>
-                  <option value="DOCTOR">Doctor</option>
-                </select>
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            {/* Profile Image Input */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
-                Profile Image
-              </label>
-              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-200 border-dashed rounded-lg bg-slate-50/50 hover:bg-slate-50 transition-colors duration-200">
-                <div className="space-y-1 text-center">
-                  <svg className="mx-auto h-10 w-10 text-slate-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
-                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  <div className="flex text-sm text-slate-600 justify-center">
-                    <label htmlFor="file-upload" className="relative cursor-pointer bg-transparent rounded-md font-semibold text-teal-600 hover:text-teal-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-teal-500">
-                      <span>Upload a file</span>
-                      <input
-                        id="file-upload"
-                        name="profileImage"
-                        type="file"
-                        accept="image/*"
-                        required
-                        className="sr-only"
-                        onChange={(e) => setProfileImage(e.target.files[0])}
-                      />
-                    </label>
-                  </div>
-                  <p className="text-xs text-slate-500">PNG, JPG, GIF up to 5MB</p>
-                  {profileImage && (
-                    <p className="text-xs font-medium text-emerald-600 mt-2 bg-emerald-50 py-1 px-2 rounded-md inline-block">
-                      Selected: {profileImage.name}
-                    </p>
-                  )}
-                </div>
+          {/* Role */}
+          <div>
+            <label className="block text-sm font-medium text-slate-400 mb-1.5">
+              Register As
+            </label>
+            <div className="relative">
+              <select
+                value={formData.role}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                className="block w-full px-4 py-3 bg-[#03090a] border border-white/[0.05] rounded-xl text-slate-200 focus:outline-none focus:border-teal-500/50 transition-colors text-sm appearance-none cursor-pointer"
+              >
+                <option value="PATIENT" className="bg-slate-800 text-white">Patient (Looking for care)</option>
+                <option value="DOCTOR" className="bg-slate-800 text-white">Doctor (Providing care)</option>
+              </select>
+              <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-400">
+                <ChevronDown className="h-4 w-4" />
               </div>
             </div>
           </div>
 
-          {/* Submit Button */}
+          {/* Profile Image */}
           <div>
+            <label className="block text-sm font-medium text-slate-400 mb-1.5">
+              Profile Photo <span className="text-slate-500 normal-case">(Optional)</span>
+            </label>
+            <div className="flex items-center justify-center w-full">
+              <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-white/[0.05] border-dashed rounded-xl cursor-pointer bg-[#03090a] hover:bg-white/[0.02] transition-colors">
+                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                  <ImageIcon className="w-6 h-6 text-slate-500 mb-2" />
+                  <p className="text-xs text-slate-400">
+                    {profileImage ? (
+                      <span className="text-teal-400 font-semibold">{profileImage.name}</span>
+                    ) : (
+                      <>Click to upload <span className="font-semibold text-teal-400">Image</span></>
+                    )}
+                  </p>
+                </div>
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={(e) => setProfileImage(e.target.files[0])}
+                />
+              </label>
+            </div>
+          </div>
+
+          <div className="pt-2">
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-lg text-white bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-500 hover:to-cyan-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 shadow-md hover:shadow-lg transform active:scale-[0.98] transition-all duration-150"
+              disabled={isLoading}
+              className="flex w-full justify-center rounded-xl bg-teal-500 hover:bg-teal-600 py-3 text-sm font-semibold text-slate-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Sign Up
+              {isLoading ? "Creating Account..." : "Create Account"}
             </button>
           </div>
         </form>
 
-        {/* Footer */}
-        <div className="text-center text-sm text-slate-500 mt-4">
+        <div className="mt-6 text-center text-sm text-slate-400">
           Already have an account?{" "}
-          <a href="/login" className="font-semibold text-teal-600 hover:text-teal-500 transition-colors">
-            Sign In
-          </a>
+          <span
+            className="font-semibold text-teal-400 hover:text-teal-300 hover:underline cursor-pointer transition-colors"
+            onClick={() => navigate("/login")}
+          >
+            Sign in
+          </span>
         </div>
       </div>
     </div>
