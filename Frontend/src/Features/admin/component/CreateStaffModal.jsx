@@ -5,6 +5,7 @@ import {
   provisionStaffAccount,
   clearNewlyCreatedCredentials,
 } from "../slices/staffProvisioningSlice"
+import { X, CheckCircle, AlertCircle, Loader2, UserPlus } from "lucide-react";
 
 function CreateStaffModal({ isOpen, onClose }) {
   const dispatch = useDispatch();
@@ -23,7 +24,6 @@ function CreateStaffModal({ isOpen, onClose }) {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // সিকিউরিটি ফ্লাশ: মডাল বন্ধ হলে বা আনমাউন্ট হলে মেমরি ক্লিনআপ
   useEffect(() => {
     if (!isOpen) {
       dispatch(clearNewlyCreatedCredentials());
@@ -47,12 +47,8 @@ function CreateStaffModal({ isOpen, onClose }) {
 
     dispatch(provisionStaffAccount(formData))
       .unwrap()
-      .then(() => {
-        toast.success("Account provisioned successfully!");
-      })
-      .catch((error) => {
-        toast.error(error || "Failed to create account.");
-      });
+      .then(() => toast.success("Account provisioned successfully!"))
+      .catch((error) => toast.error(error || "Failed to create account."));
   };
 
   const handleCloseModal = () => {
@@ -63,100 +59,67 @@ function CreateStaffModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
-        {/* মডাল হেডার */}
-        <div className="bg-gray-900 px-6 py-4 flex justify-between items-center">
-          <h2 className="text-lg font-bold text-white tracking-wide">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={handleCloseModal}></div>
+      
+      {/* Modal Content */}
+      <div className="bg-[#03090a] rounded-2xl border border-white/[0.05] shadow-2xl w-full max-w-md overflow-hidden relative z-10 transform transition-all">
+        
+        {/* Header */}
+        <div className="px-6 py-5 border-b border-white/[0.05] flex justify-between items-center bg-[#051316]">
+          <h2 className="text-lg font-semibold text-slate-200 tracking-wide flex items-center gap-2">
+            <UserPlus className="w-5 h-5 text-teal-400" />
             Provision New Account
           </h2>
           <button
             onClick={handleCloseModal}
-            className="text-gray-400 hover:text-white transition-colors"
+            className="text-slate-500 hover:text-slate-300 transition-colors p-1 rounded-md hover:bg-white/[0.05]"
           >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {newlyCreatedCredentials ? (
           <div className="p-6 space-y-6">
-            <div className="bg-green-50 border border-green-200 rounded-xl p-5 text-center shadow-inner">
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-3">
-                <svg
-                  className="h-6 w-6 text-green-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
+            <div className="bg-teal-500/10 border border-teal-500/20 rounded-xl p-6 text-center shadow-inner">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-teal-500/20 mb-4">
+                 <CheckCircle className="w-6 h-6 text-teal-400" />
               </div>
-              <h3 className="text-lg font-bold text-gray-800 mb-1">Success!</h3>
-              <p className="text-sm text-gray-600 mb-4">
-                The {newlyCreatedCredentials.user?.role} account has been
-                created.
+              <h3 className="text-lg font-semibold text-slate-200 mb-1">Success!</h3>
+              <p className="text-sm text-slate-400 mb-6">
+                The <span className="font-semibold text-teal-400">{newlyCreatedCredentials.user?.role}</span> account has been created.
               </p>
 
-              <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-                <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">
+              <div className="bg-[#03090a] rounded-xl p-5 border border-white/[0.05] shadow-sm mb-6 relative group">
+                <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-2">
                   Temporary Password
                 </p>
-                <p className="text-3xl font-mono font-black text-gray-900 tracking-widest">
+                <p className="text-3xl font-mono font-bold text-slate-200 tracking-wider">
                   {newlyCreatedCredentials.temporaryPassword}
                 </p>
               </div>
 
-              <div className="mt-4 p-3 bg-red-50 rounded-lg border border-red-100">
-                <p className="text-xs text-red-600 font-bold flex items-start gap-1 text-left">
-                  <svg
-                    className="w-4 h-4 flex-shrink-0 mt-0.5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                    />
-                  </svg>
-                  This password is shown only once. Please copy it and share it
-                  securely with the staff member.
+              <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/20 text-left flex gap-3">
+                <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-500/90 font-medium leading-relaxed">
+                  This password is shown only once. Please copy it and share it securely with the staff member before closing.
                 </p>
               </div>
             </div>
 
             <button
               onClick={handleCloseModal}
-              className="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-3 px-4 rounded-xl transition-colors focus:ring-4 focus:ring-gray-200"
+              className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-3 px-4 rounded-xl transition-colors text-sm"
             >
               I have copied the password
             </button>
           </div>
         ) : (
-          // --- স্টেট ১: প্রভিশনিং ফর্ম ---
           <div className="p-6">
             <form onSubmit={handleProvisionAccount} className="space-y-5">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-400 mb-1.5">
                   Full Name
                 </label>
                 <input
@@ -165,12 +128,12 @@ function CreateStaffModal({ isOpen, onClose }) {
                   value={formData.fullName}
                   onChange={handleChange}
                   placeholder="e.g. John Doe"
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
+                  className="w-full px-4 py-3 bg-[#051316] border border-white/[0.05] rounded-xl focus:outline-none focus:border-teal-500/50 text-slate-200 placeholder-slate-600 transition-colors text-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-400 mb-1.5">
                   Email Address
                 </label>
                 <input
@@ -179,39 +142,39 @@ function CreateStaffModal({ isOpen, onClose }) {
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="staff@healthbridge.com"
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
+                  className="w-full px-4 py-3 bg-[#051316] border border-white/[0.05] rounded-xl focus:outline-none focus:border-teal-500/50 text-slate-200 placeholder-slate-600 transition-colors text-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-400 mb-1.5">
                   Assign Role
                 </label>
                 <select
                   name="role"
                   value={formData.role}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors appearance-none font-semibold text-gray-700"
+                  className="w-full px-4 py-3 bg-[#051316] border border-white/[0.05] rounded-xl focus:outline-none focus:border-teal-500/50 text-slate-200 transition-colors text-sm appearance-none"
                 >
-                  <option value="STAFF">STAFF</option>
-                  <option value="ADMIN">ADMIN</option>
+                  <option value="STAFF" className="bg-slate-800 text-white">STAFF</option>
+                  <option value="ADMIN" className="bg-slate-800 text-white">ADMIN</option>
                 </select>
               </div>
 
-              <div className="pt-2">
+              <div className="pt-3">
                 <button
                   type="submit"
                   disabled={isProvisioning}
-                  className={`w-full py-3.5 px-4 rounded-xl text-white font-bold text-sm transition-all shadow-md flex justify-center items-center gap-2 ${
+                  className={`w-full py-3 px-4 rounded-xl text-slate-900 font-semibold text-sm transition-colors flex justify-center items-center gap-2 ${
                     isProvisioning
-                      ? "bg-blue-400 cursor-not-allowed"
-                      : "bg-blue-600 hover:bg-blue-700 hover:shadow-lg"
+                      ? "bg-teal-500/50 cursor-not-allowed"
+                      : "bg-teal-500 hover:bg-teal-600"
                   }`}
                 >
                   {isProvisioning ? (
                     <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Provisioning Account...
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Provisioning...
                     </>
                   ) : (
                     "Create Account"

@@ -5,22 +5,19 @@ import {
   changeUserStatus,
   updateFilters,
 } from "../slices/userGovernanceSlice";
+import { Search, Shield, Filter, Loader2, UserX } from "lucide-react";
 
 function UserStatusManager() {
   const dispatch = useDispatch();
 
-  // গ্লোবাল মেমরি এক্সট্র্যাকশন
   const { usersList, paginationMeta, filters, isLoadingUsers } = useSelector(
     (state) => state.userGovernance,
   );
 
-  // লোকাল মেমরি
   const [localSearch, setLocalSearch] = useState(filters.search);
 
-  // ১. দ্য ডিবাউন্স ইঞ্জিন (Network Shield)
   useEffect(() => {
     const timer = setTimeout(() => {
-      // অযথাই প্রথমবার রেন্ডার হওয়া ঠেকাতে এই কন্ডিশনটি জরুরি
       if (filters.search !== localSearch) {
         dispatch(updateFilters({ search: localSearch }));
       }
@@ -28,7 +25,6 @@ function UserStatusManager() {
     return () => clearTimeout(timer);
   }, [localSearch, dispatch, filters.search]);
 
-  // ২. দ্য রিঅ্যাক্টিভ অবসার্ভার (The Observer)
   useEffect(() => {
     dispatch(
       fetchSystemUsers({
@@ -39,22 +35,10 @@ function UserStatusManager() {
         status: filters.status,
       }),
     );
-  }, [
-    dispatch,
-    paginationMeta.currentPage,
-    filters.role,
-    filters.status,
-    filters.search,
-  ]);
+  }, [dispatch, paginationMeta.currentPage, filters.role, filters.status, filters.search]);
 
-  // ৩. ইভেন্ট ডেলিগেশন (Action Handlers)
-  const handleSearch = (e) => {
-    setLocalSearch(e.target.value);
-  };
-
-  const handleFilterChange = (e) => {
-    dispatch(updateFilters({ [e.target.name]: e.target.value }));
-  };
+  const handleSearch = (e) => setLocalSearch(e.target.value);
+  const handleFilterChange = (e) => dispatch(updateFilters({ [e.target.name]: e.target.value }));
 
   const handleStatusToggle = (userId, currentStatus) => {
     const newStatus = currentStatus === "ACTIVE" ? "BLOCKED" : "ACTIVE";
@@ -62,158 +46,133 @@ function UserStatusManager() {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-full">
-      {/* টপ কন্ট্রোল প্যানেল (Search & Filters) */}
-      <div className="p-6 border-b border-gray-200 bg-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        {/* সার্চ ইনপুট (SVG Removed & Padding Adjusted) */}
-        <div className="relative w-full md:w-96">
+    <div className="bg-[#051316] rounded-2xl border border-white/[0.05] shadow-sm overflow-hidden flex flex-col h-full">
+      {/* Top Control Panel (Search & Filters) */}
+      <div className="p-4 sm:p-6 border-b border-white/[0.05] bg-[#03090a] flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        
+        {/* Search Engine */}
+        <div className="relative w-full lg:w-96 shrink-0">
+          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+            <Search className="w-4 h-4 text-slate-500" />
+          </div>
           <input
             type="text"
-            placeholder="Search users by name or email..."
+            placeholder="Search by name or email..."
             value={localSearch}
             onChange={handleSearch}
-            className="block w-full px-4 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition duration-150 ease-in-out"
+            className="w-full bg-[#051316] border border-white/[0.05] rounded-xl pl-10 pr-4 py-2.5 text-sm font-medium text-slate-200 placeholder-slate-500 focus:outline-none focus:border-teal-500/50"
           />
         </div>
 
-        {/* ফিল্টার ড্রপডাউনস */}
-        <div className="flex items-center gap-3">
-          <select
-            name="role"
-            value={filters.role}
-            onChange={handleFilterChange}
-            className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-lg"
-          >
-            <option value="">All Roles</option>
-            <option value="PATIENT">Patient</option>
-            <option value="DOCTOR">Doctor</option>
-            <option value="ADMIN">Admin</option>
-          </select>
+        {/* Filter Engine */}
+        <div className="flex items-center gap-3 w-full lg:w-auto">
+          <div className="relative flex-1 lg:w-40">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Shield className="w-4 h-4 text-slate-500" />
+            </div>
+            <select
+              name="role"
+              value={filters.role}
+              onChange={handleFilterChange}
+              className="w-full bg-[#051316] border border-white/[0.05] rounded-xl pl-9 pr-8 py-2.5 text-sm font-medium text-slate-300 focus:outline-none focus:border-teal-500/50 appearance-none"
+            >
+              <option value="" className="bg-slate-800 text-white">All Roles</option>
+              <option value="PATIENT" className="bg-slate-800 text-white">Patient</option>
+              <option value="DOCTOR" className="bg-slate-800 text-white">Doctor</option>
+              <option value="ADMIN" className="bg-slate-800 text-white">Admin</option>
+              <option value="STAFF" className="bg-slate-800 text-white">Staff</option>
+            </select>
+          </div>
 
-          <select
-            name="status"
-            value={filters.status}
-            onChange={handleFilterChange}
-            className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-lg"
-          >
-            <option value="">All Status</option>
-            <option value="ACTIVE">Active</option>
-            <option value="BLOCKED">Blocked</option>
-          </select>
+          <div className="relative flex-1 lg:w-40">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Filter className="w-4 h-4 text-slate-500" />
+            </div>
+            <select
+              name="status"
+              value={filters.status}
+              onChange={handleFilterChange}
+              className="w-full bg-[#051316] border border-white/[0.05] rounded-xl pl-9 pr-8 py-2.5 text-sm font-medium text-slate-300 focus:outline-none focus:border-teal-500/50 appearance-none"
+            >
+              <option value="" className="bg-slate-800 text-white">All Status</option>
+              <option value="ACTIVE" className="bg-slate-800 text-white">Active</option>
+              <option value="BLOCKED" className="bg-slate-800 text-white">Blocked</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      {/* দ্য ডেটা টেবিল */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th
-                scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                User Info
-              </th>
-              <th
-                scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Role
-              </th>
-              <th
-                scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Registered
-              </th>
-              <th
-                scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Status
-              </th>
-              <th
-                scope="col"
-                className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
-                Actions
-              </th>
+      {/* The Data Grid */}
+      <div className="overflow-x-auto custom-scrollbar flex-1">
+        <table className="w-full min-w-[700px] text-left border-collapse">
+          <thead>
+            <tr className="bg-[#03090a] text-slate-400 text-xs uppercase tracking-wider border-b border-white/[0.05]">
+              <th className="px-6 py-4 font-semibold whitespace-nowrap">User Info</th>
+              <th className="px-6 py-4 font-semibold whitespace-nowrap">Role</th>
+              <th className="px-6 py-4 font-semibold whitespace-nowrap">Registered</th>
+              <th className="px-6 py-4 font-semibold whitespace-nowrap">Status</th>
+              <th className="px-6 py-4 font-semibold text-right whitespace-nowrap">Access Toggle</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {/* লোডিং স্টেট */}
+          <tbody className="divide-y divide-white/[0.05]">
             {isLoadingUsers ? (
               <tr>
-                <td
-                  colSpan="5"
-                  className="px-6 py-10 text-center text-gray-500"
-                >
-                  <div className="flex justify-center items-center space-x-2">
-                    <div className="w-4 h-4 bg-blue-500 rounded-full animate-bounce"></div>
-                    <div className="w-4 h-4 bg-blue-500 rounded-full animate-bounce delay-100"></div>
-                    <div className="w-4 h-4 bg-blue-500 rounded-full animate-bounce delay-200"></div>
-                  </div>
+                <td colSpan="5" className="px-6 py-16 text-center">
+                  <Loader2 className="w-8 h-8 animate-spin text-teal-500 mx-auto mb-3" />
+                  <p className="text-sm font-medium text-slate-400">Syncing identity database...</p>
                 </td>
               </tr>
             ) : usersList.length === 0 ? (
-              // এম্পটি স্টেট
               <tr>
-                <td
-                  colSpan="5"
-                  className="px-6 py-10 text-center text-gray-500"
-                >
-                  No users found matching your criteria.
+                <td colSpan="5" className="px-6 py-16 text-center text-slate-400">
+                  <UserX className="w-10 h-10 mx-auto text-slate-600 mb-3" />
+                  <p className="font-medium">No users found matching criteria.</p>
                 </td>
               </tr>
             ) : (
-              // একচুয়াল ডেটা রেন্ডারিং
               usersList.map((user) => (
-                <tr
-                  key={user._id}
-                  className="hover:bg-gray-50 transition-colors"
-                >
+                <tr key={user._id} className="hover:bg-white/[0.02] transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold">
+                      <div className="flex-shrink-0 h-10 w-10 bg-teal-500/10 border border-teal-500/20 rounded-full flex items-center justify-center text-teal-400 font-bold">
                         {user.fullName.charAt(0).toUpperCase()}
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium text-slate-200">
                           {user.fullName}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-xs text-slate-500">
                           {user.email}
                         </div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                    <span className="px-2.5 py-1 text-xs font-semibold rounded-md bg-white/[0.05] text-slate-300 border border-white/[0.1]">
                       {user.role}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
                     {new Date(user.createdAt).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      className={`px-2.5 py-1 text-xs font-semibold rounded-md border ${
                         user.status === "ACTIVE"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
+                          ? "bg-teal-500/10 text-teal-400 border-teal-500/20"
+                          : "bg-red-500/10 text-red-400 border-red-500/20"
                       }`}
                     >
                       {user.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    {/* অপটিমিস্টিক টগল বাটন */}
+                  <td className="px-6 py-4 whitespace-nowrap text-right">
                     <button
                       onClick={() => handleStatusToggle(user._id, user.status)}
-                      className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+                      className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none ${
                         user.status === "ACTIVE"
-                          ? "bg-green-500"
-                          : "bg-gray-300"
+                          ? "bg-teal-500"
+                          : "bg-slate-600"
                       }`}
                     >
                       <span
@@ -232,23 +191,24 @@ function UserStatusManager() {
         </table>
       </div>
 
-      {/* প্যাগিনেশন ফুটার */}
-      <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
-        <span className="text-sm text-gray-700">
-          Showing page{" "}
-          <span className="font-semibold">{paginationMeta.currentPage}</span> of{" "}
-          <span className="font-semibold">{paginationMeta.totalPages}</span>
+      {/* Pagination Footer */}
+      <div className="px-4 sm:px-6 py-4 bg-[#03090a] border-t border-white/[0.05] flex flex-col sm:flex-row items-center justify-between gap-4">
+        <span className="text-sm text-slate-400">
+          Showing page <span className="font-semibold text-slate-200">{paginationMeta.currentPage}</span> of{" "}
+          <span className="font-semibold text-slate-200">{paginationMeta.totalPages}</span>
         </span>
-        <div className="space-x-2">
+        <div className="flex gap-2 w-full sm:w-auto">
           <button
             disabled={!paginationMeta.hasPrevPage}
-            className="btn-secondary text-sm disabled:opacity-50 px-3 py-1 bg-white border border-gray-300 rounded-md"
+            onClick={() => dispatch(fetchSystemUsers({ ...filters, page: paginationMeta.currentPage - 1 }))}
+            className="flex-1 sm:flex-none text-sm disabled:opacity-50 px-4 py-2 bg-[#051316] hover:bg-white/[0.05] border border-white/[0.1] rounded-lg transition-colors text-slate-300 font-medium"
           >
             Previous
           </button>
           <button
             disabled={!paginationMeta.hasNextPage}
-            className="btn-secondary text-sm disabled:opacity-50 px-3 py-1 bg-white border border-gray-300 rounded-md"
+            onClick={() => dispatch(fetchSystemUsers({ ...filters, page: paginationMeta.currentPage + 1 }))}
+            className="flex-1 sm:flex-none text-sm disabled:opacity-50 px-4 py-2 bg-[#051316] hover:bg-white/[0.05] border border-white/[0.1] rounded-lg transition-colors text-slate-300 font-medium"
           >
             Next
           </button>
