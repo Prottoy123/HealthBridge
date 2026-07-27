@@ -1,6 +1,7 @@
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
 import dotenv from "dotenv";
+import { ApiError } from "./apiError.js";
 
 dotenv.config({
   path: "./.env",
@@ -34,11 +35,9 @@ const deleteFromCloudinary = async (publicId) => {
     const response = await cloudinary.uploader.destroy(publicId, {
       resource_type: "image",
     });
-    console.log("file is deleted from cloudinary", response.result);
     return response;
   } catch (error) {
     throw new ApiError(500, "Error while deleting the file from cloudinary");
-    return null;
   }
 };
 

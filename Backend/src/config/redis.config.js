@@ -1,5 +1,5 @@
 import { Redis } from "ioredis";
-import { ApiError } from "../utils/ApiError.js";
+import { ApiError } from "../utils/apiError.js";
 
 let redisInstance = null;
 

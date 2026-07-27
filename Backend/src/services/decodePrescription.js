@@ -1,6 +1,6 @@
 import { z } from "zod";
 import aiModel from "../config/ai.config.js";
-import { ApiError } from "../utils/ApiError.js";
+import { ApiError } from "../utils/apiError.js";
 import fs from "fs";
 
 export const prescriptionOutputSchema = z
