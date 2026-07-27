@@ -4,8 +4,9 @@ import {
   fetchDoctorsForDropdown,
   generateDoctorSlots,
   clearSlotFeedback,
-} from "../slices/slotSlice";
+} from "../Slices/SlotSlice";
 import toast from "react-hot-toast";
+import { CalendarClock, Calendar, Clock, Loader2, ArrowRight } from "lucide-react";
 
 function SlotManager() {
   const dispatch = useDispatch();
@@ -59,94 +60,103 @@ function SlotManager() {
     dispatch(generateDoctorSlots(payload));
   };
 
-
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white rounded-xl border border-gray-200 shadow-sm">
-      <div className="mb-8 border-b border-gray-100 pb-4">
-        <h2 className="text-2xl font-bold text-gray-800">
+    <div className="max-w-4xl mx-auto">
+      <div className="mb-8">
+        <h2 className="text-2xl font-semibold text-white tracking-tight flex items-center gap-2">
+          <CalendarClock className="w-6 h-6 text-teal-400" />
           Slot Configuration Engine
         </h2>
-        <p className="text-gray-500 text-sm mt-1">
-          Generate available appointment slots for doctors.
+        <p className="text-sm text-slate-400 mt-1">
+          Generate and manage available appointment slots for doctors.
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50 rounded-lg border border-gray-100">
-          {/* Doctor Dropdown Engine */}
-          <div className="flex flex-col">
-            <label className="text-sm font-semibold text-gray-700 mb-2">
-              Select Doctor <span className="text-red-500">*</span>
+        <div className="bg-[#03090a] p-6 rounded-2xl border border-white/[0.05] flex flex-col md:flex-row gap-6">
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-slate-400 mb-2">
+              Target Doctor
             </label>
-            <select
-              value={selectedDoctor}
-              onChange={(e) => setSelectedDoctor(e.target.value)}
-              disabled={isLoadingDoctors}
-              className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-            >
-              <option value="">
-                {isLoadingDoctors
-                  ? "Loading doctors..."
-                  : "-- Select a Doctor --"}
-              </option>
-
-              {doctorsList?.map((doctor) => (
-                <option key={doctor._id} value={doctor._id}>
-                  Dr. {doctor.User_details?.fullName || "Unknown"}
-                  {doctor.specialization ? ` (${doctor.specialization})` : ""}
+            <div className="relative">
+              <select
+                value={selectedDoctor}
+                onChange={(e) => setSelectedDoctor(e.target.value)}
+                disabled={isLoadingDoctors}
+                className="w-full bg-[#051316] border border-white/[0.05] rounded-xl px-4 py-3 text-sm font-medium text-slate-200 focus:outline-none focus:border-teal-500/50 appearance-none disabled:opacity-50"
+              >
+                <option value="" className="bg-slate-800 text-white">
+                  {isLoadingDoctors ? "Syncing..." : "-- Select Doctor --"}
                 </option>
-              ))}
-            </select>
+                {doctorsList?.map((doctor) => (
+                  <option key={doctor._id} value={doctor._id} className="bg-slate-800 text-white">
+                    Dr. {doctor.User_details?.fullName || "Unknown"}
+                    {doctor.specialization ? ` (${doctor.specialization})` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          <div className="flex flex-col">
-            <label className="text-sm font-semibold text-gray-700 mb-2">
-              Appointment Date <span className="text-red-500">*</span>
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-slate-400 mb-2">
+              Appointment Date
             </label>
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              min={new Date().toISOString().split("T")[0]}
-              className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Calendar className="w-4 h-4 text-slate-500" />
+              </div>
+              <input
+                type="date"
+                style={{ colorScheme: 'dark' }}
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                min={new Date().toISOString().split("T")[0]}
+                className="w-full bg-[#051316] border border-white/[0.05] rounded-xl pl-10 pr-4 py-3 text-sm font-medium text-slate-200 focus:outline-none focus:border-teal-500/50"
+              />
+            </div>
           </div>
         </div>
 
-        <div className="p-4 border border-dashed border-gray-300 rounded-lg">
-          <div className="mb-4">
-            <h3 className="text-md font-semibold text-gray-700">
-              Custom Time Overrides
-            </h3>
-            <p className="text-xs text-gray-500">
-              Leave blank to use the doctor's default profile schedule.
-            </p>
+        <div className="bg-[#03090a] p-6 rounded-2xl border border-white/[0.05]">
+          <div className="mb-6 flex items-center justify-between border-b border-white/[0.05] pb-4">
+            <div>
+              <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
+                <Clock className="w-4 h-4 text-teal-400" />
+                Custom Time Overrides
+              </h3>
+              <p className="text-xs text-slate-500 mt-1">
+                Leave blank to inherit the doctor's default profile schedule.
+              </p>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex flex-col">
-              <label className="text-sm text-gray-600 mb-1">Start Time</label>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-slate-400 mb-2">Start Time</label>
               <input
                 type="time"
+                style={{ colorScheme: 'dark' }}
                 value={customStartTime}
                 onChange={(e) => setCustomStartTime(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full bg-[#051316] border border-white/[0.05] rounded-xl px-4 py-2.5 text-sm font-medium text-slate-200 focus:outline-none focus:border-teal-500/50"
               />
             </div>
 
-            <div className="flex flex-col">
-              <label className="text-sm text-gray-600 mb-1">End Time</label>
+            <div>
+              <label className="block text-sm font-medium text-slate-400 mb-2">End Time</label>
               <input
                 type="time"
+                style={{ colorScheme: 'dark' }}
                 value={customEndTime}
                 onChange={(e) => setCustomEndTime(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full bg-[#051316] border border-white/[0.05] rounded-xl px-4 py-2.5 text-sm font-medium text-slate-200 focus:outline-none focus:border-teal-500/50"
               />
             </div>
 
-            <div className="flex flex-col">
-              <label className="text-sm text-gray-600 mb-1">
-                Duration (Minutes)
+            <div>
+              <label className="block text-sm font-medium text-slate-400 mb-2">
+                Duration (Mins)
               </label>
               <input
                 type="number"
@@ -155,24 +165,29 @@ function SlotManager() {
                 value={customDuration}
                 onChange={(e) => setCustomDuration(e.target.value)}
                 placeholder="e.g. 15"
-                className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full bg-[#051316] border border-white/[0.05] rounded-xl px-4 py-2.5 text-sm font-medium text-slate-200 focus:outline-none focus:border-teal-500/50 placeholder-slate-600"
               />
             </div>
           </div>
         </div>
 
-        {/* Submit Action */}
-        <div className="flex justify-end pt-4 border-t border-gray-100">
+        <div className="flex justify-end pt-2">
           <button
             type="submit"
             disabled={isGenerating || isLoadingDoctors}
-            className={`px-6 py-2 rounded-md font-semibold text-white transition-colors ${
-              isGenerating || isLoadingDoctors
-                ? "bg-blue-400 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700"
-            }`}
+            className="px-6 py-3 bg-teal-500 hover:bg-teal-600 disabled:opacity-50 disabled:cursor-not-allowed text-slate-900 font-semibold rounded-xl transition-colors text-sm flex items-center gap-2"
           >
-            {isGenerating ? "Deploying Slots..." : "Generate Slots"}
+            {isGenerating ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Deploying Slots...
+              </>
+            ) : (
+              <>
+                Generate Slots
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
           </button>
         </div>
       </form>
