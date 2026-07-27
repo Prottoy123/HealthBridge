@@ -22,9 +22,11 @@ import chatReducer from "../Features/chat/chatSlice";
 import patientReducer from "../Features/patient/Slices/patientSlice";
 import appointmentSlice from "../Features/patient/Slices/appointmentSlice";
 import aiReducer from "../Features/patient/Slices/AI-Slices";
+import patientVaultReducer from "../Features/patient/Slices/patientVaultSlice";
+import patientInboxReducer from "../Features/patient/Slices/patientInboxSlice";
 
 //DOCTOR ROLE
-import doctorListReducer from "../Features/patient/slices/doctorListSlice";
+import doctorListReducer from "../Features/patient/Slices/doctorListSlice";
 import doctorProfileSlice from "../Features/doctor/Slices/doctorProfileSlice";
 import doctorReducer from "../Features/doctor/Slices/doctorSlice";
 import PatientHistoryReducer from "../Features/doctor/Slices/PatientHistorySlice";
@@ -44,19 +46,20 @@ const storage = storageModule?.default || storageModule;
 const rootReducer = combineReducers({
   auth: authReducer,
   patient: patientReducer,
+  patientVault: patientVaultReducer,
+  patientInbox: patientInboxReducer,
   doctorList: doctorListReducer,
   admin: adminReducer,
   adminStaff: adminStaffReducer,
   userGovernance: userGovernanceReducer,
   doctorProfile: doctorProfileSlice,
   patientHistory: PatientHistoryReducer,
-  doctor: doctorReducer,
+  doctor: doctorReducer, 
   appointment: appointmentSlice,
   ai: aiReducer,
   slot: SlotReducer,
   staff: staffReducer,
   chat: chatReducer,
-
 });
 
 const persistConfig = {

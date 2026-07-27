@@ -30,7 +30,7 @@ export const useSocket = (roomId = null) => {
       });
 
       globalSocket.on("connect", () => {
-        console.log("⚡ Global Socket Bridge Connected");
+
       });
 
       // --- GLOBAL LISTENERS (Always Active) ---
