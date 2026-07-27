@@ -1,5 +1,5 @@
 import { User } from "../models/User.models.js";
-import { ApiResponse } from "../utils/apiResponse.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
@@ -119,7 +119,7 @@ export const getPatientPrescriptions = asyncHandler(async (req, res) => {
     patientId: patientId,
     doctorId: doctorProfile._id, 
     status: {
-      $in: ["COMPLETED", "CONFIRMED"],
+      $in: ["COMPLETED", "CONFIRMED", "ACTIVE"],
     },
     appointmentDate: { $gte: thresholdDate },
   });

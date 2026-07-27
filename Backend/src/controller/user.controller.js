@@ -1,7 +1,7 @@
 import { User } from "../models/User.models.js";
-import { PatientProfile } from "../models/PatientProfile.models.js";
+import { PatientProfile } from "../models/patientProfile.models.js";
 import { DoctorProfile } from "../models/doctorProfile.models.js";
-import { ApiResponse } from "../utils/apiResponse.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
@@ -115,7 +115,7 @@ export const userLogin = asyncHandler(async (req, res) => {
   const isPasswordValid = await user.isPasswordCorrect(password);
 
   if (!isPasswordValid) {
-    throw new ApiError(200, "password Doesnt match");
+    throw new ApiError(401, "Password Doesn't match");
   }
 
   const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(

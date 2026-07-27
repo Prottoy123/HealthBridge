@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { User } from "../models/User.models.js";
-import { ApiResponse } from "../utils/apiResponse.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
@@ -297,6 +297,7 @@ export const getAppointmentDetails = asyncHandler(async (req, res) => {
       $project: {
         _id: 1,
         status: 1,
+        patientId: 1,
         aiSymptomSummary: 1, // Exposed Gemini AI summary for the doctor
 
         // Packing all compiled patient demographics & medical data
@@ -329,8 +330,8 @@ export const getAppointmentDetails = asyncHandler(async (req, res) => {
     .json(
       new ApiResponse(
         200,
-        "Appointment details fetched successfully",
-        appointmentDetails[0]
+        appointmentDetails[0],
+        "Appointment details fetched successfully"
       )
     );
 });
@@ -364,6 +365,7 @@ export const completeVisit = asyncHandler(async (req, res) => {
       {
         _id: appointmentId,
         doctorId: doctorProfile._id,
+        status: { $in: ["CHECKED-IN", "IN-PROGRESS"] },
       },
       {
         $set: {
@@ -378,8 +380,8 @@ export const completeVisit = asyncHandler(async (req, res) => {
 
     if (!appointmentStatus) {
       throw new ApiError(
-        404,
-        "Appointment not found or you are not authorized"
+        400,
+        "Failed to complete visit. Patient must be checked in by staff first."
       );
     }
 

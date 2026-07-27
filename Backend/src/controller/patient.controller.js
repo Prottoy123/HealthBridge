@@ -1,8 +1,8 @@
 import { User } from "../models/User.models.js";
-import { PatientProfile } from "../models/PatientProfile.models.js";
-import { DoctorProfile } from "../models/DoctorProfile.models.js";
+import { PatientProfile } from "../models/patientProfile.models.js";
+import { DoctorProfile } from "../models/doctorProfile.models.js";
 import { MedicalRecord } from "../models/medicalRecord.models.js";
-import { ApiResponse } from "../utils/apiResponse.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 import {
   uploadOnCloudinary,
   deleteFromCloudinary,
@@ -153,12 +153,13 @@ export const getAvailableSlots = asyncHandler(async (req, res) => {
     throw new ApiError(400, "DoctorId and Date are required");
   }
 
-  const targetDate = new Date(date);
+  const todayDate = new Date();
+  const year = todayDate.getFullYear();
+  const month = String(todayDate.getMonth() + 1).padStart(2, '0');
+  const day = String(todayDate.getDate()).padStart(2, '0');
+  const todayString = `${year}-${month}-${day}`;
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  if (targetDate < today) {
+  if (date < todayString) {
     throw new ApiError(400, "Invalid date. Cannot book slots for past dates.");
   }
 
@@ -181,6 +182,19 @@ export const bookAppointment = asyncHandler(async (req, res) => {
 
   if (!appointmentId) {
     throw new ApiError(400, "Appointment ID is required");
+  }
+
+  // Prevent user from holding multiple active bookings at once
+  const existingBooking = await Appointment.findOne({
+    patientId: req.user._id,
+    status: { $in: ["CONFIRMED", "CHECKED-IN", "IN-PROGRESS"] },
+  });
+
+  if (existingBooking) {
+    throw new ApiError(
+      400,
+      "You already have an active appointment. Please complete or cancel it before booking a new one."
+    );
   }
 
   const redisClient = getRedis();
