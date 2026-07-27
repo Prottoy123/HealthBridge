@@ -1,64 +1,44 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
 import {
   decodePrescription,
   clearDecodedPrescription,
 } from "../Slices/AI-Slices";
 import toast from "react-hot-toast";
+import { Scan, X, FileText, Loader2, AlertCircle } from "lucide-react";
 
-const AiPrescriptionDecoder = () => {
+const AiPrescriptionDecoder = ({ record, onClose }) => {
   const dispatch = useDispatch();
 
-  // Redux State Extraction
   const { decodedPrescription, isDecodingPrescription, prescriptionError } =
     useSelector((state) => state.ai);
 
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const validTypes = ["image/jpeg", "image/png", "image/webp"];
-    if (!validTypes.includes(file.type)) {
-      toast.error("Invalid file format. Please upload JPEG, PNG, or WEBP.");
+  const handleDecodeSubmit = async () => {
+    if (!record?.fileUrl) {
+      toast.error("Image source not found.");
       return;
     }
 
-    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
-    if (file.size > maxSize) {
-      toast.error("Image size exceeds 5MB limit.");
-      return;
-    }
+    try {
+      const response = await fetch(record.fileUrl);
+      const blob = await response.blob();
 
-    // 3. Memory Safe Preview Generation
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-    }
+      const file = new File([blob], "prescription.jpg", {
+        type: blob.type || "image/jpeg",
+      });
 
-    const newPreview = URL.createObjectURL(file);
-    setPreviewUrl(newPreview);
-    setSelectedFile(file);
-  };
-
-  // The Execution Engine
-  const handleDecodeSubmit = (e) => {
-    e.preventDefault();
-    if (!selectedFile) {
-      toast.error("Please select a prescription image first.");
-      return;
+      dispatch(decodePrescription(file));
+    } catch (error) {
+      toast.error("Network error: Failed to process image for AI.");
     }
-    dispatch(decodePrescription(selectedFile));
   };
 
   useEffect(() => {
     if (prescriptionError) {
       toast.error(
-        prescriptionError === "422" ||
+        prescriptionError.includes("422") ||
           prescriptionError.includes("Unprocessable")
-          ? "ছবিটি অস্পষ্ট। অনুগ্রহ করে আলোতে স্পষ্ট ছবি তুলে আবার আপলোড করুন।"
+          ? "The image is unclear. Please take a clear photo in good lighting and upload again."
           : prescriptionError || "Failed to decode the prescription.",
       );
     }
@@ -66,137 +46,157 @@ const AiPrescriptionDecoder = () => {
 
   useEffect(() => {
     return () => {
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
       dispatch(clearDecodedPrescription());
     };
-  }, []);
+  }, [dispatch]);
+
+  let parsedPrescription = decodedPrescription;
+  if (typeof decodedPrescription === "string") {
+    try {
+      parsedPrescription = JSON.parse(decodedPrescription);
+    } catch (e) {
+      parsedPrescription = { raw: decodedPrescription };
+    }
+  }
 
   return (
-    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 max-w-2xl mx-auto mt-6">
-      <div className="mb-6">
-        <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-          <svg
-            className="w-6 h-6 text-indigo-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M13 10V3L4 14h7v7l9-11h-7z"
-            />
-          </svg>
-          Vision AI Decoder
-        </h2>
-        <p className="text-sm text-gray-500 mt-1">
-          Upload a clear picture of your prescription to extract medicines and
-          instructions automatically.
-        </p>
-      </div>
-
-      <form onSubmit={handleDecodeSubmit} className="space-y-6">
-        {/* Upload Zone */}
-        <div className="relative border-2 border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors">
-          <input
-            type="file"
-            accept="image/jpeg, image/png, image/webp"
-            onChange={handleFileChange}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-          />
-
-          {previewUrl ? (
-            <div className="w-full relative">
-              <img
-                src={previewUrl}
-                alt="Prescription preview"
-                className="max-h-64 mx-auto rounded shadow-sm"
-              />
-              <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
-                Click to change
-              </div>
-            </div>
-          ) : (
-            <div className="text-center">
-              <svg
-                className="w-12 h-12 text-gray-400 mx-auto mb-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
-              <span className="text-sm font-medium text-gray-700">
-                Tap or drag an image here
-              </span>
-              <p className="text-xs text-gray-500 mt-1">
-                JPEG, PNG, WEBP (Max 5MB)
+    <div className="fixed inset-0 bg-[#03090a]/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4 md:p-10">
+      
+      <div className={`w-full max-h-full flex flex-col relative transition-all duration-500 ease-in-out ${
+        decodedPrescription ? "max-w-6xl" : "max-w-2xl"
+      }`}>
+        
+        {/* Header Bar */}
+        <div className="flex justify-between items-center mb-6 shrink-0">
+          <div className="flex items-center gap-4">
+             <div className="w-12 h-12 bg-teal-500/10 rounded-xl flex items-center justify-center border border-teal-500/20 shadow-sm relative overflow-hidden">
+                <Scan className="w-6 h-6 text-teal-400 relative z-10" />
+             </div>
+            <div>
+              <h3 className="text-2xl font-bold text-slate-200 tracking-tight">
+                Vision AI Decoder
+              </h3>
+              <p className="text-xs text-teal-400 font-semibold uppercase tracking-widest mt-1">
+                Target: {record.title || "Medical Document"}
               </p>
             </div>
-          )}
-        </div>
-
-        {/* Action Button */}
-        <button
-          type="submit"
-          disabled={!selectedFile || isDecodingPrescription}
-          className={`w-full py-3 px-4 rounded-xl font-bold text-white transition-all duration-200 flex items-center justify-center gap-2 
-            ${!selectedFile || isDecodingPrescription ? "bg-indigo-300 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700 shadow-md hover:shadow-lg"}`}
-        >
-          {isDecodingPrescription ? (
-            <>
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-              Decoding Image...
-            </>
-          ) : (
-            "Decode with AI"
-          )}
-        </button>
-      </form>
-
-      {/* Result UI (Structured JSON Rendering) */}
-      {decodedPrescription && (
-        <div className="mt-8 p-5 bg-indigo-50 border border-indigo-100 rounded-xl animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <h3 className="font-semibold text-indigo-900 mb-4 border-b border-indigo-200 pb-2">
-            AI Analysis Result
-          </h3>
-
-          <div className="space-y-4">
-            {/* assuming decodedPrescription returns an array of medicines or structured objects */}
-            <div className="bg-white p-3 rounded-lg shadow-sm border border-indigo-50">
-              <pre className="text-xs text-gray-700 whitespace-pre-wrap overflow-auto">
-                {JSON.stringify(decodedPrescription, null, 2)}
-              </pre>
-            </div>
-
-            <p className="text-xs text-gray-400 text-center mt-2 flex items-center justify-center gap-1">
-              <svg
-                className="w-4 h-4 text-amber-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                />
-              </svg>
-              AI generated content. Always consult a real doctor before taking
-              medication.
-            </p>
           </div>
+          <button
+            onClick={onClose}
+            className="w-10 h-10 flex items-center justify-center bg-[#051316] hover:bg-rose-500/10 text-slate-400 hover:text-rose-400 font-bold transition-colors rounded-xl border border-white/[0.05] hover:border-rose-500/20"
+            disabled={isDecodingPrescription}
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
-      )}
+
+        {/* Dynamic Workspace */}
+        <div className={`flex flex-col ${decodedPrescription ? 'lg:flex-row' : ''} gap-6 h-full overflow-hidden`}>
+          
+          {/* Left/Center Panel: Image Preview & Scanning */}
+          <div className={`flex flex-col relative transition-all duration-500 h-[60vh] lg:h-auto overflow-hidden ${
+             decodedPrescription ? 'lg:w-1/2 shrink-0' : 'w-full h-[70vh]'
+          }`}>
+            <div className="bg-[#051316] rounded-3xl border border-white/[0.05] p-2 shadow-sm flex-1 relative overflow-hidden group flex items-center justify-center">
+
+              {/* Main Image */}
+              <img
+                src={record.fileUrl}
+                alt="Prescription Target"
+                className={`w-full h-full object-contain rounded-2xl transition-all duration-500 ${
+                  isDecodingPrescription ? "opacity-30 grayscale" : "opacity-90"
+                }`}
+              />
+
+              {/* Holographic Scan Overlay */}
+              {isDecodingPrescription && (
+                <>
+                  <div className="absolute top-0 left-0 w-full h-[20%] bg-gradient-to-b from-transparent to-teal-500/20 shadow-[0_2px_20px_#2dd4bf] animate-[scan_2s_ease-in-out_infinite]"></div>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center z-10 backdrop-blur-[1px]">
+                    <Loader2 className="w-12 h-12 text-teal-500 animate-spin" />
+                    <div className="mt-4 text-teal-400 font-bold uppercase tracking-widest text-xs animate-pulse">Neural Scan Initiated</div>
+                    <div className="mt-2 text-teal-500/70 font-semibold uppercase tracking-widest text-[10px]">Extracting Medical Entities...</div>
+                  </div>
+                </>
+              )}
+
+              {/* Start Button (If not started and not done) */}
+              {!isDecodingPrescription && !decodedPrescription && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <button
+                    onClick={handleDecodeSubmit}
+                    className="px-6 py-3 bg-teal-500 hover:bg-teal-600 text-slate-900 rounded-xl font-bold uppercase tracking-widest shadow-sm transition-all flex items-center gap-2 text-sm"
+                  >
+                    <FileText className="w-5 h-5" />
+                    Extract Data
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right Panel: Extracted Matrix (Only visible when decoded) */}
+          {decodedPrescription && (
+            <div className="flex-1 bg-[#051316] rounded-3xl border border-white/[0.05] p-6 md:p-8 flex flex-col shadow-sm relative overflow-hidden animate-in slide-in-from-right-8 duration-500 h-[60vh] lg:h-auto">
+              
+              <div className="flex items-center gap-3 mb-6 shrink-0 relative z-10">
+                <span className="flex h-3 w-3 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-teal-500"></span>
+                </span>
+                <h3 className="text-sm font-bold text-slate-200 uppercase tracking-widest">
+                  Extraction Matrix
+                </h3>
+              </div>
+
+              <div className="flex-1 overflow-y-auto custom-scrollbar pr-4 relative z-10 space-y-4">
+                
+                {/* Visual Mapping of Data */}
+                {parsedPrescription && typeof parsedPrescription === 'object' && !parsedPrescription.raw ? (
+                  <div className="space-y-4">
+                    {Object.entries(parsedPrescription).map(([key, value], idx) => (
+                      <div key={idx} className="bg-[#03090a] border border-white/[0.05] rounded-2xl p-5">
+                        <h4 className="text-[10px] font-bold text-teal-400 uppercase tracking-widest mb-3">{key.replace(/_/g, ' ')}</h4>
+                        
+                        {Array.isArray(value) ? (
+                          <div className="flex flex-wrap gap-2">
+                            {value.map((item, i) => (
+                              <span key={i} className="px-3 py-1.5 bg-[#051316] rounded-lg text-sm text-slate-200 font-medium border border-white/[0.05]">
+                                {typeof item === 'object' ? JSON.stringify(item) : item}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-slate-200 text-sm leading-relaxed font-medium">
+                            {typeof value === 'object' ? JSON.stringify(value) : value}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  /* Fallback Raw Rendering */
+                  <div className="bg-[#03090a] p-6 rounded-2xl border border-white/[0.05] h-full">
+                    <pre className="text-xs font-mono text-slate-300 whitespace-pre-wrap leading-relaxed">
+                      {JSON.stringify(parsedPrescription, null, 2)}
+                    </pre>
+                  </div>
+                )}
+                
+              </div>
+
+              <div className="mt-6 shrink-0 bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 flex items-start gap-3 relative z-10">
+                 <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
+                 <div>
+                    <p className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">Medical Disclaimer</p>
+                    <p className="text-xs text-amber-500/80 font-medium mt-1">This is an AI-generated interpretation of a handwritten document. Errors may exist. Always verify with your consulting physician.</p>
+                 </div>
+              </div>
+            </div>
+          )}
+
+        </div>
+      </div>
     </div>
   );
 };

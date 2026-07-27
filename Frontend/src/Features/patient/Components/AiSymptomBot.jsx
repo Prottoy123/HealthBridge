@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 
 import { analyzeSymptoms, clearSymptomSummary } from "../Slices/AI-Slices";
+import { Loader2, RefreshCw, ArrowRight, Brain } from "lucide-react";
 
 function AiSymptomBot() {
   const dispatch = useDispatch();
@@ -14,7 +15,6 @@ function AiSymptomBot() {
   );
 
   const [symptomText, setSymptomText] = useState("");
-
   const isValidInput = symptomText.trim().length >= 20;
 
   const handleAnalyze = () => {
@@ -25,12 +25,8 @@ function AiSymptomBot() {
 
     dispatch(analyzeSymptoms(symptomText))
       .unwrap()
-      .then(() => {
-        toast.success("Analysis complete! Review your summary.");
-      })
-      .catch((error) => {
-        toast.error(error || "Failed to analyze symptoms.");
-      });
+      .then(() => toast.success("Analysis complete! Review your summary."))
+      .catch((error) => toast.error(error || "Failed to analyze symptoms."));
   };
 
   const handleClear = () => {
@@ -38,185 +34,140 @@ function AiSymptomBot() {
     setSymptomText("");
   };
 
-  const handleProceed = () => {
-    navigate("/patient/get-doctors");
-  };
+  const handleProceed = () => navigate("/patient/get-doctors");
 
   return (
-    <div className="w-full max-w-3xl mx-auto p-4 md:p-6 mt-8">
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-        {/* হেডার সেকশন */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 text-white text-center">
-          <h2 className="text-2xl font-bold mb-2 flex items-center justify-center gap-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-7 w-7"
-              viewBox="0 0 20 20"
-              fill="currentColor"
+    <div className="w-full h-full flex flex-col relative z-10">
+      {/* 
+        ========================================================================
+        STATE 2: RESULTS MATRIX (When AI has processed the text)
+        ========================================================================
+      */}
+      {symptomSummary ? (
+        <div className="flex-1 flex flex-col justify-between animate-in zoom-in-95 duration-500 h-full p-2">
+          
+          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-4">
+            {/* The Clinical Matrix Output */}
+            <div className="bg-[#051316] border border-white/[0.05] rounded-2xl p-5 relative shadow-sm">
+              <div className="absolute top-0 right-0 px-3 py-1 bg-teal-500/10 text-teal-400 font-bold text-[10px] uppercase tracking-widest rounded-bl-xl rounded-tr-2xl border-b border-l border-white/[0.05]">
+                Analysis Complete
+              </div>
+
+              <div className="flex items-start gap-3 mb-4">
+                <div className="mt-1 flex h-3 w-3 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-teal-500"></span>
+                </div>
+                <div>
+                  <h3 className="text-teal-400 font-bold uppercase tracking-widest text-[10px]">AI Summary</h3>
+                  <p className="text-slate-200 text-sm font-medium leading-relaxed mt-1">
+                    {symptomSummary.aiSymptomSummary}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 border-t border-white/[0.05] pt-4 mt-2">
+                {/* Specialist Card */}
+                <div className="bg-[#03090a] border border-white/[0.05] rounded-xl p-3 flex flex-col justify-between">
+                  <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1">Target Specialist</span>
+                  <span className="text-teal-400 font-semibold text-sm leading-tight">{symptomSummary.specialistRecommendation}</span>
+                </div>
+                
+                {/* Severity Badge */}
+                <div className={`border rounded-xl p-3 flex flex-col justify-between ${
+                  symptomSummary.severityLevel?.toLowerCase().includes("high") || symptomSummary.severityLevel?.toLowerCase().includes("severe")
+                    ? "bg-rose-500/10 border-rose-500/30 text-rose-400"
+                    : symptomSummary.severityLevel?.toLowerCase().includes("moderate")
+                    ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
+                    : "bg-teal-500/10 border-teal-500/30 text-teal-400"
+                }`}>
+                  <span className="text-inherit opacity-70 text-[10px] font-bold uppercase tracking-widest mb-1">Severity Level</span>
+                  <span className="font-bold text-sm leading-tight uppercase tracking-wide">{symptomSummary.severityLevel}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Row */}
+          <div className="mt-4 pt-4 border-t border-white/[0.05] grid grid-cols-2 gap-3 shrink-0">
+             <button
+              onClick={handleClear}
+              className="py-3 bg-[#03090a] hover:bg-white/[0.05] border border-white/[0.05] text-slate-300 hover:text-white rounded-xl text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
             >
-              <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
-            </svg>
-            AI Triage Bot
-          </h2>
-          <p className="text-blue-100 text-sm font-medium">
-            Describe your symptoms naturally, and our AI will generate a
-            structured summary for the doctor.
-          </p>
+              <RefreshCw className="w-4 h-4" />
+              Reset
+            </button>
+            <button
+              onClick={handleProceed}
+              className="py-3 bg-teal-500 hover:bg-teal-600 text-slate-900 rounded-xl text-xs font-bold uppercase tracking-widest shadow-sm transition-colors flex items-center justify-center gap-2"
+            >
+              Consult
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
+      ) : (
+        /* 
+          ========================================================================
+          STATE 1: INPUT TERMINAL
+          ========================================================================
+        */
+        <div className="flex-1 flex flex-col p-2">
+          <div className="relative flex-1 group min-h-[200px]">
+            {/* Terminal Styling */}
+            <div className="absolute inset-0 bg-[#051316] rounded-2xl border border-white/[0.05] pointer-events-none transition-colors duration-300 shadow-sm"></div>
+            
+            <textarea
+              value={symptomText}
+              onChange={(e) => setSymptomText(e.target.value)}
+              placeholder="How are you feeling? Describe your symptoms... (e.g. Sharp pain in the lower back radiating downwards for 2 days.)"
+              className="absolute inset-0 w-full h-full p-6 bg-transparent text-slate-200 placeholder-slate-600 resize-none outline-none z-10 custom-scrollbar font-medium"
+              disabled={isAnalyzingSymptom}
+            />
 
-        <div className="p-6">
-          {symptomSummary ? (
-            // --- State 2: Result Mode (Fixed Object Rendering) ---
-            <div className="space-y-6 animate-fade-in-up">
-              <div className="bg-blue-50 rounded-xl p-5 border border-blue-100 relative shadow-inner">
-                <div className="absolute top-0 right-0 -mt-3 -mr-3 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm">
-                  Ready for Doctor
-                </div>
-
-                {/* AI Object Breakdown */}
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                      Generated Summary
-                    </h3>
-                    <p className="text-gray-800 text-base leading-relaxed font-medium">
-                      {symptomSummary.aiSymptomSummary}
-                    </p>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row gap-4 pt-3 border-t border-blue-200">
-                    <div className="flex-1">
-                      <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                        Recommended Specialist
-                      </h3>
-                      <p className="text-blue-700 font-bold bg-blue-100 inline-block px-3 py-1 rounded-md">
-                        {symptomSummary.specialistRecommendation}
-                      </p>
-                    </div>
-                    <div>
-                      <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                        Severity Level
-                      </h3>
-                      <span
-                        className={`inline-block px-3 py-1 rounded-md text-sm font-bold ${
-                          symptomSummary.severityLevel
-                            ?.toLowerCase()
-                            .includes("high") ||
-                          symptomSummary.severityLevel
-                            ?.toLowerCase()
-                            .includes("severe")
-                            ? "bg-red-100 text-red-700"
-                            : symptomSummary.severityLevel
-                                  ?.toLowerCase()
-                                  .includes("moderate")
-                              ? "bg-yellow-100 text-yellow-700"
-                              : "bg-green-100 text-green-700"
-                        }`}
-                      >
-                        {symptomSummary.severityLevel}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-4 pt-2">
-                <button
-                  onClick={handleProceed}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all hover:shadow-lg flex justify-center items-center gap-2"
-                >
-                  <span>Proceed to Book Doctor</span>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </button>
-                <button
-                  onClick={handleClear}
-                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 px-4 rounded-lg transition-colors flex justify-center items-center gap-2"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  Re-analyze / Edit
-                </button>
-              </div>
+            {/* Character Count Overlay */}
+            <div className="absolute bottom-4 right-4 z-20 pointer-events-none">
+               <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-[#03090a] border ${symptomText.trim().length >= 20 ? 'text-teal-400 border-teal-500/20' : 'text-slate-500 border-white/[0.05]'}`}>
+                  {symptomText.trim().length} Chars
+               </span>
             </div>
-          ) : (
-            // --- State 1: Input Mode ---
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  How are you feeling today?
-                </label>
-                <textarea
-                  value={symptomText}
-                  onChange={(e) => setSymptomText(e.target.value)}
-                  placeholder="Example: I have been experiencing a high fever and severe headache for the last 3 days..."
-                  rows="5"
-                  className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none bg-gray-50 focus:bg-white"
-                  disabled={isAnalyzingSymptom}
-                ></textarea>
+          </div>
 
-                <div className="flex justify-between items-center mt-2">
-                  <span
-                    className={`text-xs font-medium ${symptomText.trim().length >= 20 ? "text-green-600" : "text-gray-500"}`}
-                  >
-                    {symptomText.trim().length} characters
-                  </span>
-                  {symptomError && (
-                    <span className="text-xs font-semibold text-red-500">
-                      {symptomError}
-                    </span>
-                  )}
+          <div className="mt-4 shrink-0">
+             {symptomError && (
+                <div className="mb-3 text-[10px] font-bold uppercase tracking-widest text-rose-400 bg-rose-500/10 border border-rose-500/20 py-2 px-3 rounded-lg text-center">
+                  {symptomError}
                 </div>
-              </div>
-
-              <button
-                onClick={handleAnalyze}
-                disabled={!isValidInput || isAnalyzingSymptom}
-                className={`w-full py-3.5 rounded-xl text-white font-bold text-lg transition-all shadow-md flex justify-center items-center gap-2 ${
-                  !isValidInput || isAnalyzingSymptom
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700 hover:shadow-lg"
-                }`}
-              >
-                {isAnalyzingSymptom ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Analyzing Symptoms...
-                  </>
-                ) : (
-                  "Generate AI Summary"
-                )}
-              </button>
-
-              {!isValidInput && (
-                <p className="text-center text-xs text-gray-500 font-medium">
-                  Please type at least 20 characters to enable AI analysis.
-                </p>
               )}
-            </div>
-          )}
+            <button
+              onClick={handleAnalyze}
+              disabled={!isValidInput || isAnalyzingSymptom}
+              className={`w-full py-4 rounded-xl text-xs font-bold uppercase tracking-widest transition-colors flex justify-center items-center gap-3 ${
+                !isValidInput || isAnalyzingSymptom
+                  ? "bg-[#051316] text-slate-600 border border-white/[0.05] cursor-not-allowed"
+                  : "bg-teal-500 text-slate-900 shadow-sm hover:bg-teal-600"
+              }`}
+            >
+              {isAnalyzingSymptom ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-teal-900" />
+                  Processing Data...
+                </>
+              ) : (
+                <>
+                  <Brain className="w-4 h-4" />
+                  Analyze Symptoms
+                </>
+              )}
+            </button>
+            {!isValidInput && (
+              <p className="text-center text-[10px] font-bold text-slate-600 uppercase tracking-widest mt-3">
+                Minimum 20 characters required to activate AI engine.
+              </p>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
