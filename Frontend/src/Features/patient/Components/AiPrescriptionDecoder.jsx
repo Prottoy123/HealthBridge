@@ -93,7 +93,7 @@ const AiPrescriptionDecoder = ({ record, onClose }) => {
         </div>
 
         {/* Dynamic Workspace */}
-        <div className={`flex flex-col ${decodedPrescription ? 'lg:flex-row' : ''} gap-6 h-full overflow-hidden`}>
+        <div className={`flex flex-col ${decodedPrescription ? 'lg:flex-row' : ''} gap-6 h-full overflow-y-auto lg:overflow-hidden`}>
           
           {/* Left/Center Panel: Image Preview & Scanning */}
           <div className={`flex flex-col relative transition-all duration-500 h-[60vh] lg:h-auto overflow-hidden ${
