@@ -184,10 +184,17 @@ export const bookAppointment = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Appointment ID is required");
   }
 
-  // Prevent user from holding multiple active bookings at once
+  const todayDate = new Date();
+  const year = todayDate.getFullYear();
+  const month = String(todayDate.getMonth() + 1).padStart(2, '0');
+  const day = String(todayDate.getDate()).padStart(2, '0');
+  const todayString = `${year}-${month}-${day}`;
+
+  // Prevent user from holding multiple active bookings at once (ignoring past uncompleted ones)
   const existingBooking = await Appointment.findOne({
     patientId: req.user._id,
     status: { $in: ["CONFIRMED", "CHECKED-IN", "IN-PROGRESS"] },
+    appointmentDate: { $gte: todayString }
   });
 
   if (existingBooking) {
