@@ -40,7 +40,6 @@ export const registerUser = asyncHandler(async (req, res) => {
     );
   }
 
-  // ২. ইনভ্যালিড রোল ব্লক করা
   if (userRole !== "PATIENT" && userRole !== "DOCTOR") {
     throw new ApiError(
       400,
@@ -125,6 +124,7 @@ export const userLogin = asyncHandler(async (req, res) => {
   const options = {
     httpOnly: true,
     secure: true,
+    sameSite: "none"
   };
 
   const loggedInUser = await User.findById(user._id).select(
