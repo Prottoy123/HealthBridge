@@ -32,7 +32,7 @@ export const uploadPrescription = asyncHandler(async (req, res) => {
     title,
     doctorName,
     prescriptionDate,
-    fileUrl: uploadImage.url,
+    fileUrl: uploadImage.secure_url,
     publicId: uploadImage.public_id,
   });
 

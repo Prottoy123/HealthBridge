@@ -253,7 +253,7 @@ export const uploadPatientReport = asyncHandler(async (req, res) => {
   const medicalRecordsData = successfulUploads.map((file) => {
     return {
       patientId: patientId,
-      fileUrl: file.url,
+      fileUrl: file.secure_url,
       recordType: "LAB_REPORT",
       uploadedBy: req.user._id,
       uploaderRole: req.user.role,

@@ -70,7 +70,7 @@ export const registerUser = asyncHandler(async (req, res) => {
   const user = await User.create({
     fullName,
     email,
-    profileImage: profileImage.url,
+    profileImage: profileImage.secure_url,
     password,
     role: userRole,
     status: userStatus,

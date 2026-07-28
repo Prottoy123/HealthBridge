@@ -103,7 +103,7 @@ export const uploadMedicalRecord = asyncHandler(async (req, res) => {
   const medicalRecordsData = successfulUploads.map((file) => {
     return {
       patientId: req.user._id,
-      fileUrl: file.url,
+      fileUrl: file.secure_url,
       recordType,
       description,
       uploadedBy: req.user._id,
