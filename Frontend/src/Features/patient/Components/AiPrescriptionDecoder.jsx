@@ -13,14 +13,16 @@ const AiPrescriptionDecoder = ({ record, onClose }) => {
   const { decodedPrescription, isDecodingPrescription, prescriptionError } =
     useSelector((state) => state.ai);
 
+  const secureImageUrl = record?.fileUrl?.replace(/^http:\/\//i, 'https://');
+
   const handleDecodeSubmit = async () => {
-    if (!record?.fileUrl) {
+    if (!secureImageUrl) {
       toast.error("Image source not found.");
       return;
     }
 
     try {
-      const response = await fetch(record.fileUrl);
+      const response = await fetch(secureImageUrl);
       const blob = await response.blob();
 
       const file = new File([blob], "prescription.jpg", {
@@ -101,7 +103,7 @@ const AiPrescriptionDecoder = ({ record, onClose }) => {
 
               {/* Main Image */}
               <img
-                src={record.fileUrl}
+                src={secureImageUrl}
                 alt="Prescription Target"
                 className={`w-full h-full object-contain rounded-2xl transition-all duration-500 ${
                   isDecodingPrescription ? "opacity-30 grayscale" : "opacity-90"
