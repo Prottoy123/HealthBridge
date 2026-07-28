@@ -139,7 +139,7 @@ const AiPrescriptionDecoder = ({ record, onClose }) => {
 
           {/* Right Panel: Extracted Matrix (Only visible when decoded) */}
           {decodedPrescription && (
-            <div className="flex-1 bg-[#051316] rounded-3xl border border-white/[0.05] p-6 md:p-8 flex flex-col shadow-sm relative overflow-hidden animate-in slide-in-from-right-8 duration-500 h-[60vh] lg:h-auto">
+            <div className="shrink-0 lg:flex-1 bg-[#051316] rounded-3xl border border-white/[0.05] p-6 md:p-8 flex flex-col shadow-sm relative overflow-hidden animate-in slide-in-from-right-8 duration-500 min-h-[60vh] lg:min-h-0 lg:h-auto">
               
               <div className="flex items-center gap-3 mb-6 shrink-0 relative z-10">
                 <span className="flex h-3 w-3 relative">
