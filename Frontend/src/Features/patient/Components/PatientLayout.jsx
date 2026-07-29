@@ -65,14 +65,14 @@ const PatientLayout = () => {
             </Link>
 
             <Link
-              to="/patient/vault"
+              to="/patient/history"
               className={`px-5 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-colors ${
-                isActive("/vault")
+                isActive("/history")
                   ? "bg-teal-500/10 text-teal-400"
                   : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.05]"
               }`}
             >
-              Medical Vault
+              Appointment History
             </Link>
 
             <Link
