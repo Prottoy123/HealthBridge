@@ -11,6 +11,7 @@ const Register = () => {
     email: "",
     password: "",
     role: "PATIENT",
+    bmdcRegistration: "",
   });
   const [profileImage, setProfileImage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -19,6 +20,9 @@ const Register = () => {
     e.preventDefault();
 
     if (formData.password.length < 6) return toast.error("Password must be at least 6 characters.");
+    if (formData.role === "DOCTOR" && !formData.bmdcRegistration.trim()) {
+      return toast.error("BMDC Registration number is required for doctors.");
+    }
 
     setIsLoading(true);
 
@@ -27,6 +31,9 @@ const Register = () => {
     submitData.append("email", formData.email);
     submitData.append("password", formData.password);
     submitData.append("role", formData.role);
+    if (formData.role === "DOCTOR") {
+      submitData.append("bmdcRegistration", formData.bmdcRegistration);
+    }
     if (profileImage) submitData.append("profileImage", profileImage);
 
     try {
@@ -126,6 +133,23 @@ const Register = () => {
               </div>
             </div>
           </div>
+
+          {/* BMDC Registration (Doctors Only) */}
+          {formData.role === "DOCTOR" && (
+            <div className="animate-in slide-in-from-top-2 fade-in duration-300">
+              <label className="block text-sm font-medium text-slate-400 mb-1.5">
+                BM&DC Registration Number <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.bmdcRegistration}
+                onChange={(e) => setFormData({ ...formData, bmdcRegistration: e.target.value })}
+                className="block w-full px-4 py-3 bg-[#03090a] border border-white/[0.05] rounded-xl text-slate-200 placeholder-slate-600 focus:outline-none focus:border-teal-500/50 transition-colors text-sm"
+                placeholder="e.g. A12345"
+              />
+            </div>
+          )}
 
           {/* Profile Image */}
           <div>
