@@ -26,7 +26,7 @@ const generateAccessAndRefreshTokens = async (userId) => {
 
 //register User
 export const registerUser = asyncHandler(async (req, res) => {
-  const { email, fullName, password, role } = req.body;
+  const { email, fullName, password, role, bmdcRegistration } = req.body;
 
   if (!email || !fullName || !password || !role) {
     throw new ApiError(400, "All credentials are required");
@@ -45,6 +45,10 @@ export const registerUser = asyncHandler(async (req, res) => {
       400,
       "Invalid role. Only PATIENT or DOCTOR are allowed."
     );
+  }
+
+  if (userRole === "DOCTOR" && !bmdcRegistration) {
+    throw new ApiError(400, "BMDC Registration number is required for doctors");
   }
 
   const existedUser = await User.findOne({ email });
@@ -87,7 +91,7 @@ export const registerUser = asyncHandler(async (req, res) => {
   if (createdUser.role === "PATIENT") {
     await PatientProfile.create({ userId: user._id });
   } else if (createdUser.role === "DOCTOR") {
-    await DoctorProfile.create({ userId: user._id });
+    await DoctorProfile.create({ userId: user._id, bmdcRegistration });
   }
 
   return res
