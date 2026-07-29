@@ -448,10 +448,24 @@ export const getAppointmentHistory = asyncHandler(async (req, res) => {
       },
     },
     {
-      // LOOKUP 2: Fetch Doctor's User details (Name, Image)
+      // LOOKUP 2: Fetch Doctor Profile to get the actual user ID
+      $lookup: {
+        from: "doctorprofiles",
+        localField: "doctorId", // doctorId here is the DoctorProfile._id
+        foreignField: "_id",
+        as: "doctorProfileInfo",
+      },
+    },
+    {
+      $addFields: {
+        doctorUserId: { $arrayElemAt: ["$doctorProfileInfo.userId", 0] },
+      },
+    },
+    {
+      // LOOKUP 3: Fetch Doctor's User details (Name, Image)
       $lookup: {
         from: "users",
-        localField: "doctorId",
+        localField: "doctorUserId",
         foreignField: "_id",
         as: "doctorInfo",
       },
