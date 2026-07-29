@@ -21,6 +21,7 @@ import chatReducer from "../Features/chat/chatSlice";
 //PATIENT ROLE
 import patientReducer from "../Features/patient/Slices/patientSlice";
 import appointmentSlice from "../Features/patient/Slices/appointmentSlice";
+import appointmentHistoryReducer from "../Features/patient/Slices/appointmentHistorySlice";
 import aiReducer from "../Features/patient/Slices/AI-Slices";
 import patientVaultReducer from "../Features/patient/Slices/patientVaultSlice";
 import patientInboxReducer from "../Features/patient/Slices/patientInboxSlice";
@@ -48,6 +49,7 @@ const rootReducer = combineReducers({
   patient: patientReducer,
   patientVault: patientVaultReducer,
   patientInbox: patientInboxReducer,
+  appointmentHistory: appointmentHistoryReducer,
   doctorList: doctorListReducer,
   admin: adminReducer,
   adminStaff: adminStaffReducer,
