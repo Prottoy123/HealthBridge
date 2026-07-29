@@ -38,6 +38,7 @@ import PatientProfileSettings from "./Features/patient/Components/PatientProfile
 import BookAppointment from "./Features/patient/Components/BookAppointment";
 import Vault from "./Features/patient/Vault";
 import PatientMessages from "./Features/patient/PatientMessages"
+import AppointmentHistory from "./Features/patient/Components/AppointmentHistory";
 
 const App = () => {
   return (
@@ -74,6 +75,7 @@ const App = () => {
               <Route path="get-doctors" element={<GetDoctorList />} />
               <Route path="book-appointment" element={<BookAppointment />} />
               <Route path="vault" element={<Vault />} />
+              <Route path="history" element={<AppointmentHistory />} />
 
               {/* The Patient Inbox & Chat Engine */}
               <Route

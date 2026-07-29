@@ -39,7 +39,7 @@ function UserMenuDropdown() {
       await api.post("/user/logout");
       dispatch(logout());
       toast.success("Logged out successfully");
-      navigate("/login");
+      navigate("/");
     } catch (error) {
       toast.error("Logout failed. Please try again.");
     }
