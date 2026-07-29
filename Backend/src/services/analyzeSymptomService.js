@@ -49,12 +49,14 @@ export const analyzeSymptomService = async (symptomsText) => {
     Include 1 or 2 or 3 common, possible reasons (conditions/diseases) for these symptoms. 
     You MUST include a short disclaimer saying this is just an AI assessment and not a final medical diagnosis.
     
-    For the specialistRecommendation, give ONLY the doctor's category title.
+    For the specialistRecommendation, you MUST choose ONLY ONE of the following exact categories that best fits the symptoms:
+    "General Medicine", "Cardiology", "Dermatology", "Endocrinology", "Gastroenterology", "Neurology", "Oncology", "Pediatrics", "Psychiatry", "Orthopedics", "Ophthalmology", "ENT (Otolaryngology)", "Gynecology", "Urology", "Nephrology", "Pulmonology", "Rheumatology", "Dental", "Surgery", "Psychology", "Nutrition & Dietetics".
+    If none fit perfectly, use "Other".
 
     Return a JSON object matching this exact structure:
     {
         "aiSymptomSummary": "string (Empathetic summary + possible conditions + short disclaimer)",
-        "specialistRecommendation": "string (e.g., Neurologist, General Physician)",
+        "specialistRecommendation": "string (Must be EXACTLY one of the allowed categories listed above)",
         "severityLevel": "LOW | MEDIUM | HIGH"
     }
 `;
