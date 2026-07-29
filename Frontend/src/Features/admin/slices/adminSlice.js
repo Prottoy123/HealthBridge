@@ -76,10 +76,8 @@ const adminSlice = createSlice({
         hasNextPage: false,
         hasPrevPage: false,
       };
-      state.analyticsData = null;
       state.status = "idle";
       state.error = null;
-      state.analyticsError = null;
     },
   },
   extraReducers: (builder) => {
