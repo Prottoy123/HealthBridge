@@ -140,7 +140,7 @@ function ChatInterface() {
   const activeDoctorId = user?.role === "PATIENT" ? messages.find((msg) => msg.senderId !== user._id)?.senderId : null;
 
   return (
-    <div className="w-full max-w-[1600px] mx-auto p-4 md:p-6 flex flex-col md:flex-row gap-6 h-full min-h-[calc(100vh-8rem)] animate-in fade-in duration-700">
+    <div className="w-full max-w-[1600px] mx-auto p-0 sm:p-4 md:p-6 flex flex-col md:flex-row gap-6 h-[calc(100dvh-4rem)] md:h-full md:min-h-[calc(100vh-8rem)] animate-in fade-in duration-700">
       
       {/* 
         ========================================================================
@@ -214,15 +214,15 @@ function ChatInterface() {
         RIGHT PANE: CHAT INTERFACE
         ========================================================================
       */}
-      <div className="flex-1 bg-[#03090a] rounded-[2.5rem] border border-white/[0.05] shadow-[0_20px_40px_rgba(0,0,0,0.3)] relative overflow-hidden flex flex-col h-[calc(100vh-10rem)]">
+      <div className="flex-1 bg-[#03090a] rounded-none sm:rounded-[2.5rem] border-0 sm:border border-white/[0.05] shadow-[0_20px_40px_rgba(0,0,0,0.3)] relative overflow-hidden flex flex-col h-full md:h-[calc(100vh-10rem)]">
         
         {/* Ambient Glow */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/10 rounded-full blur-[80px] pointer-events-none -translate-y-1/2 translate-x-1/4"></div>
 
         {/* Header */}
-        <div className="px-6 md:px-8 py-5 bg-white/[0.02] border-b border-white/[0.05] flex items-center justify-between z-10 shrink-0">
+        <div className="px-4 md:px-8 py-3 md:py-5 bg-white/[0.02] border-b border-white/[0.05] flex items-center justify-between z-10 shrink-0">
           <div>
-            <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-3">
+            <h2 className="text-lg md:text-xl font-black text-white tracking-tight flex items-center gap-2 md:gap-3">
                <div className="w-8 h-8 bg-teal-500/10 rounded-lg flex items-center justify-center border border-teal-500/20">
                   <svg className="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                </div>
@@ -254,7 +254,7 @@ function ChatInterface() {
         </div>
 
         {/* Messages List Area */}
-        <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 relative z-10 custom-scrollbar bg-[#020607]">
+        <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 md:p-8 space-y-4 md:space-y-6 relative z-10 custom-scrollbar bg-[#020607]">
           <div ref={observerTargetRef} className="h-4 w-full">
             {isFetchingMore && (
               <div className="flex justify-center">
@@ -283,7 +283,7 @@ function ChatInterface() {
               const isMe = msg.senderId === user?._id;
               return (
                 <div key={msg._id} className={`flex w-full ${isMe ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[85%] md:max-w-[70%] px-6 py-4 rounded-3xl text-sm font-medium leading-relaxed relative group shadow-lg ${
+                  <div className={`max-w-[85%] md:max-w-[70%] px-4 md:px-6 py-3 md:py-4 rounded-2xl md:rounded-3xl text-sm font-medium leading-relaxed relative group shadow-lg ${
                       isMe
                         ? "bg-gradient-to-br from-teal-500 to-cyan-400 text-slate-950 rounded-br-sm shadow-[0_10px_20px_rgba(20,184,166,0.2)]"
                         : "bg-[#051316] border border-white/[0.05] text-slate-200 rounded-bl-sm"
@@ -314,19 +314,19 @@ function ChatInterface() {
 
         {/* Input Area */}
         {chatStatus === "ACTIVE" ? (
-          <div className="p-4 md:p-6 bg-[#051316] border-t border-white/[0.05] z-10 shrink-0">
-            <form onSubmit={handleSendMessage} className="flex items-center gap-4 bg-[#020607] p-2 rounded-2xl border border-white/[0.05] shadow-inner focus-within:border-teal-500/30 focus-within:ring-1 focus-within:ring-teal-500/30 transition-all">
+          <div className="p-3 md:p-6 bg-[#051316] border-t border-white/[0.05] z-10 shrink-0">
+            <form onSubmit={handleSendMessage} className="flex items-center gap-2 md:gap-4 bg-[#020607] p-1.5 md:p-2 rounded-2xl border border-white/[0.05] shadow-inner focus-within:border-teal-500/30 focus-within:ring-1 focus-within:ring-teal-500/30 transition-all">
               <input
                 type="text"
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder="Type your message..."
-                className="flex-1 bg-transparent px-4 py-3 text-sm font-medium text-white placeholder-slate-600 focus:outline-none"
+                className="flex-1 bg-transparent px-3 md:px-4 py-2 md:py-3 text-sm font-medium text-white placeholder-slate-600 focus:outline-none"
               />
               <button
                 type="submit"
                 disabled={!text.trim()}
-                className="bg-teal-500 hover:bg-teal-400 disabled:bg-white/[0.02] disabled:text-slate-600 disabled:shadow-none text-slate-950 rounded-xl px-6 py-4 transition-all duration-300 shadow-[0_0_15px_rgba(20,184,166,0.3)] font-black uppercase tracking-[0.2em] text-[10px] flex items-center gap-2 shrink-0"
+                className="bg-teal-500 hover:bg-teal-400 disabled:bg-white/[0.02] disabled:text-slate-600 disabled:shadow-none text-slate-950 rounded-xl px-4 md:px-6 py-3 md:py-4 transition-all duration-300 shadow-[0_0_15px_rgba(20,184,166,0.3)] font-black uppercase tracking-[0.2em] text-[10px] flex items-center gap-1 md:gap-2 shrink-0"
               >
                 Send
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
