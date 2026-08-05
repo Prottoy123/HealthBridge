@@ -100,3 +100,16 @@ npm run dev
 
 ### 4. Access the App
 Open your browser and navigate to `http://localhost:5173`
+
+---
+
+## ☁️ Deployment Architecture
+
+### Backend Deployment (AWS & Docker)
+* **Containerization:** The Node.js/Express backend is fully containerized using **Docker** for consistent environments across development and production.
+* **Hosting:** Deployed on an **AWS EC2** instance for scalable and reliable compute capacity.
+* **Security & Delivery:** Integrated with **AWS CloudFront** as a CDN to ensure secure, low-latency API responses, with SSL/TLS encryption for enhanced security.
+
+### Frontend Deployment (Vercel)
+* **Hosting:** The React (Vite) application is hosted on **Vercel**, taking advantage of its optimized edge network.
+* **CI/CD:** Automated deployments directly from the repository for continuous integration and delivery.
