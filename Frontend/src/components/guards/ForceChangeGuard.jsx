@@ -7,7 +7,7 @@ const ForceChangeGuard = ({ children }) => {
   const location = useLocation();
 
   if (!isAuthenticated || !user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/" state={{ from: location }} replace />;
   }
 
   if (["STAFF", "ADMIN"].includes(user.role) && user.status === "PENDING") {
