@@ -5,6 +5,6 @@ import { useSelector } from "react-redux";
 const RequireAuth = () => {
   const { accessToken } = useSelector((state) => state.auth);
 
-  return accessToken ? <Outlet /> : <Navigate to="/login" replace />;
+  return accessToken ? <Outlet /> : <Navigate to="/" replace />;
 };
 export default RequireAuth;
