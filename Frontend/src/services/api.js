@@ -33,7 +33,7 @@ api.interceptors.response.use(
         // Token Expired বা Unauthorized
         toast.error("Session expired. Please login again.");
         store.dispatch(logout()); // Redux থেকে ইউজার ক্লিয়ার করে লগআউট
-        window.location.href = "/login"; // রিডাইরেক্ট
+        window.location.href = "/"; // রিডাইরেক্ট
         break;
 
       case 403:
